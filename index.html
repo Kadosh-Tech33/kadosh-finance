@@ -69,6 +69,20 @@
     padding:9px 16px; border-radius:100px; box-shadow:var(--shadow);
   }
 
+  /* ---------- FILTRO DE PERÍODO ---------- */
+  .period-filter{
+    display:flex; gap:6px; margin-bottom:20px;
+    background:var(--panel); border:1px solid var(--border); border-radius:100px;
+    padding:5px; width:fit-content; max-width:100%; overflow-x:auto;
+  }
+  .period-tab{
+    padding:8px 18px; border:none; border-radius:100px; background:none;
+    color:var(--text-soft); font-family:'Manrope',sans-serif; font-weight:700; font-size:13px;
+    cursor:pointer; transition:background .2s, color .2s; white-space:nowrap; flex-shrink:0;
+  }
+  .period-tab:hover:not(.active){ background:var(--bg); color:var(--text); }
+  .period-tab.active{ background:linear-gradient(135deg,var(--navy),var(--blue)); color:#fff; }
+
   /* ---------- HERO / BALANCE ---------- */
   .hero-grid{
     display:grid; grid-template-columns: 1.3fr 1fr; gap:20px;
@@ -217,28 +231,27 @@
   .expense-name{ font-size:14.5px; font-weight:700; color:var(--text); }
   .expense-type{ font-size:11px; color:var(--text-soft); font-weight:600; margin-top:1px; }
 
-  .expense-input-row{
-    display:flex; align-items:center;
+  .expense-total-row{
+    display:flex; align-items:baseline; justify-content:space-between; gap:8px;
     border:1.5px solid var(--border);
     border-radius:var(--radius-sm);
     padding:10px 14px;
     background:#fbfcfe;
-    transition: border-color .2s ease, background .2s ease;
   }
-  .expense-input-row:focus-within{
-    border-color: var(--blue);
-    background:#fff;
-    box-shadow: 0 0 0 4px rgba(33,140,201,0.10);
+  .expense-total-value{ font-size:16px; font-weight:700; color:var(--text); font-family:'Manrope', sans-serif; }
+  .expense-entry-count{
+    font-size:11px; color:var(--text-soft); font-weight:600; white-space:nowrap;
+    background:none; border:none; padding:2px 4px; margin:-2px -4px; border-radius:6px;
+    cursor:pointer; font-family:inherit; transition:background .15s, color .15s;
   }
-  .expense-input-row span{
-    font-size:13.5px; color:var(--text-soft); font-weight:700; margin-right:6px;
+  .expense-entry-count:hover{ background:rgba(33,140,201,0.08); color:var(--blue); }
+  .btn-add-lancamento{
+    width:100%; padding:9px; border:1.5px dashed var(--border); border-radius:var(--radius-sm);
+    background:none; color:var(--blue); cursor:pointer;
+    font-family:'Manrope',sans-serif; font-size:12.5px; font-weight:700;
+    transition:border-color .2s, background .2s;
   }
-  .expense-input-row input{
-    border:none; outline:none; background:transparent;
-    font-size:16px; font-weight:700; color:var(--text);
-    width:100%; font-family:'Manrope', sans-serif;
-  }
-  .expense-input-row input::placeholder{ color:#c3cbd8; font-weight:600; }
+  .btn-add-lancamento:hover{ border-color:var(--blue); background:rgba(33,140,201,0.06); border-style:solid; }
 
   .expense-bar-track{
     height:4px; border-radius:100px; background:#eef1f6; overflow:hidden;
@@ -248,6 +261,51 @@
     background: linear-gradient(90deg, var(--navy), var(--blue));
     width:0%; transition: width .35s ease;
   }
+  /* Meta: barra de progresso (guardado/alvo) — verde, cor de conquista, pra
+     diferenciar visualmente da barra de consumo de saldo dos gastos comuns. */
+  .expense-card.is-goal .expense-bar-track{ height:7px; cursor:pointer; }
+  .expense-card.is-goal .expense-bar-fill{ background: linear-gradient(90deg, var(--pos), #22b880); }
+
+  /* Cartão de Crédito: mesmo padrão do card de Meta (barra "X de Y", clique
+     na barra abre o histórico), cor própria (roxo) pra diferenciar de Meta
+     (verde) e gasto comum (azul). */
+  .expense-card.is-card .expense-bar-track{ height:7px; cursor:pointer; }
+  .expense-card.is-card .expense-bar-fill{ background: linear-gradient(90deg, #6c5ce7, #8b7cf0); }
+  .card-due-line{ font-size:11.5px; font-weight:700; color:var(--text-soft); }
+  /* Vencimento a 5 dias ou menos: reaproveita a mesma cor de alerta do
+     "Alerta de Orçamento Apertado" (var(--warn)) — vale pra qualquer card
+     com vencimento configurado, não só Cartão (ver campo opcional). */
+  .expense-card.due-soon{
+    border-color: rgba(201,138,18,0.4);
+    box-shadow: 0 0 0 3px rgba(201,138,18,0.08);
+  }
+  .expense-card.due-soon .card-due-line{
+    display:inline-flex; align-items:center; gap:5px;
+    padding:3px 9px; border-radius:100px;
+    background:rgba(201,138,18,0.09); color:var(--warn); font-weight:800; font-size:11px;
+  }
+
+  /* Fixo/Variável: diferenciação sutil (tarja + cor do subtítulo) pra
+     categorias comuns (padrão ou personalizada) — Meta e Cartão já têm a
+     própria linguagem visual (barra colorida) e não usam essas classes. */
+  .expense-card.tipo-fixo{ border-left-width:3px; border-left-color:var(--navy); }
+  .expense-card.tipo-variavel{ border-left-width:3px; border-left-color:#0e9594; }
+  .expense-card.tipo-fixo .expense-type{ color:var(--navy); }
+  .expense-card.tipo-variavel .expense-type{ color:#0e9594; }
+
+  /* Toggle Fixo/Variável (form de nova categoria) — botão em vez de
+     dropdown, pra responder num clique só. */
+  .tipo-toggle{ display:flex; gap:8px; }
+  .tipo-toggle-btn{
+    flex:1; padding:11px; border:1.5px solid var(--border); border-radius:var(--radius-sm);
+    background:#fbfcfe; color:var(--text-soft); font-family:'Manrope',sans-serif;
+    font-weight:700; font-size:13.5px; cursor:pointer;
+    transition:border-color .2s, background .2s, color .2s;
+  }
+  .tipo-toggle-btn:hover{ border-color:var(--blue); color:var(--blue); }
+  .tipo-toggle-btn.active[data-tipo="Fixo"]{ border-color:var(--navy); background:rgba(25,48,101,0.08); color:var(--navy); }
+  .tipo-toggle-btn.active[data-tipo="Variável"]{ border-color:#0e9594; background:rgba(14,149,148,0.08); color:#0e9594; }
+  .tipo-toggle.invalid .tipo-toggle-btn{ border-color:var(--neg); }
 
   .add-custom-card{
     background:transparent;
@@ -268,7 +326,8 @@
     text-align:center; margin-top:44px;
     font-size:12px; color:var(--text-soft);
   }
-  .footnote b{ color:var(--navy); }
+  .footnote a{ color:var(--navy); font-weight:700; text-decoration:none; }
+  .footnote a:hover{ text-decoration:underline; }
 
   ::selection{ background: rgba(33,140,201,0.25); }
 
@@ -321,6 +380,26 @@
   /* — Add form step — */
   .add-form-title{ font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:0.02em; color:var(--navy); margin-bottom:6px; }
   .add-form-sub{ font-size:13.5px; color:var(--text-soft); margin-bottom:22px; line-height:1.5; }
+
+  /* — Confirm modal (genérico) — */
+  .confirm-modal{ max-width:400px; text-align:center; }
+  .confirm-modal .add-form-title{ margin-bottom:10px; }
+  .confirm-modal .add-form-sub{ margin-bottom:0; }
+  .confirm-actions{ display:flex; gap:10px; margin-top:26px; }
+  .btn-confirm-cancel{
+    flex:1; padding:12px; border:1.5px solid var(--border); border-radius:var(--radius-sm);
+    background:#fff; color:var(--text-soft); cursor:pointer;
+    font-family:'Manrope',sans-serif; font-weight:700; font-size:13.5px;
+    transition:border-color .2s, color .2s;
+  }
+  .btn-confirm-cancel:hover{ border-color:var(--text-soft); color:var(--text); }
+  .btn-confirm-ok{
+    flex:1; padding:12px; border:none; border-radius:var(--radius-sm);
+    background:linear-gradient(135deg,var(--neg),#b8331f); color:#fff; cursor:pointer;
+    font-family:'Manrope',sans-serif; font-weight:800; font-size:13.5px;
+    transition:opacity .2s, transform .15s;
+  }
+  .btn-confirm-ok:hover{ opacity:.88; transform:translateY(-1px); }
   .form-row{ display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
   .form-lbl{ font-size:11.5px; font-weight:800; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-soft); }
   .form-ctrl{
@@ -350,6 +429,72 @@
   }
   .btn-add-expense:hover{ opacity:.88; transform:translateY(-1px); }
   .btn-add-expense:active{ transform:translateY(0); }
+
+  /* — Lançamentos (histórico por categoria) — */
+  .entry-form-row{ display:flex; gap:12px; }
+  #entriesOverlay.history-only #addEntryForm{ display:none; }
+  .entry-form-row .form-row{ flex:1; }
+  .entry-history{
+    margin-top:20px; max-height:240px; overflow-y:auto;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .entry-history-empty{ font-size:13px; color:var(--text-soft); text-align:center; padding:16px 0; }
+  .entry-row{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:#fbfcfe;
+  }
+  .entry-row-date{ font-size:11.5px; font-weight:800; color:var(--text-soft); flex-shrink:0; width:34px; }
+  .entry-row-desc{
+    flex:1; min-width:0; font-size:13px; font-weight:600; color:var(--text);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .entry-row-val{ font-size:13px; font-weight:800; color:var(--text); flex-shrink:0; }
+  .entry-row-del{
+    cursor:pointer; background:none; border:none; color:var(--text-soft);
+    padding:2px; line-height:0; flex-shrink:0; transition:color .15s;
+  }
+  .entry-row-del svg{ width:13px; height:13px; display:block; }
+  .entry-row-del:hover{ color:var(--neg); }
+  .entry-row-edit-btn{
+    cursor:pointer; background:none; border:none; color:var(--text-soft);
+    padding:2px; line-height:0; flex-shrink:0; transition:color .15s;
+  }
+  .entry-row-edit-btn svg{ width:13px; height:13px; display:block; }
+  .entry-row-edit-btn:hover{ color:var(--blue); }
+  .entry-row.editing{ align-items:center; flex-wrap:wrap; gap:8px; }
+  .entry-row-edit-fields{ display:flex; gap:8px; flex:1 1 auto; min-width:0; flex-wrap:wrap; }
+  .entry-row-edit-fields input{
+    border:1.5px solid var(--border); border-radius:8px; padding:7px 9px;
+    font-family:'Manrope',sans-serif; font-size:12.5px; font-weight:600; color:var(--text);
+    outline:none; background:#fff; transition:border-color .2s, box-shadow .2s; min-width:0;
+  }
+  .entry-row-edit-fields input:focus{ border-color:var(--blue); box-shadow:0 0 0 3px rgba(33,140,201,0.10); }
+  .entry-row-edit-date{ width:122px; flex-shrink:0; }
+  .entry-row-edit-currency{
+    display:flex; align-items:center; gap:5px; border:1.5px solid var(--border);
+    border-radius:8px; padding:7px 9px; background:#fff; width:92px; flex-shrink:0;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .entry-row-edit-currency:focus-within{ border-color:var(--blue); box-shadow:0 0 0 3px rgba(33,140,201,0.10); }
+  .entry-row-edit-currency span{ font-size:12px; color:var(--text-soft); font-weight:700; flex-shrink:0; }
+  .entry-row-edit-currency input{ border:none; outline:none; background:transparent; padding:0; width:100%; font-size:12.5px; font-weight:700; color:var(--text); }
+  .entry-row-edit-desc{ flex:1 1 110px; }
+  .entry-row-actions{ display:flex; gap:6px; flex-shrink:0; }
+  .entry-row-save-btn, .entry-row-cancel-btn{
+    cursor:pointer; background:none; border:none; color:var(--text-soft);
+    padding:2px; line-height:0; flex-shrink:0; transition:color .15s;
+  }
+  .entry-row-save-btn svg, .entry-row-cancel-btn svg{ width:15px; height:15px; display:block; }
+  .entry-row-save-btn:hover{ color:var(--pos); }
+  .entry-row-cancel-btn:hover{ color:var(--neg); }
+
+  /* Edição inline do card de Cartão (nome + limite + fechamento + vencimento)
+     — reaproveita os mesmos estilos .entry-row-edit-* já usados na edição de
+     lançamentos, só num painel vertical em vez de uma linha de histórico. */
+  .card-edit-panel{ display:flex; flex-direction:column; gap:8px; }
+  .card-edit-field{ display:flex; flex-direction:column; gap:4px; }
+  .card-edit-day{ width:92px; flex-shrink:0; }
 
   @keyframes fadeIn{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:none; } }
 
@@ -423,6 +568,7 @@
     border-radius:100px; padding:5px 8px 5px 12px;
     font-size:12px; font-weight:700; color:#fff;
   }
+  .renda-chip i{ font-style:normal; font-weight:600; color:rgba(255,255,255,0.55); }
   .renda-chip-x{
     cursor:pointer; background:none; border:none; color:rgba(255,255,255,0.5);
     font-size:15px; line-height:1; padding:0 2px; font-family:inherit;
@@ -439,6 +585,13 @@
   .renda-form-name::placeholder{ color:rgba(255,255,255,0.35); }
   .renda-form-name:focus{ border-color:var(--blue-light); background:rgba(255,255,255,0.15); }
   .renda-form-row{ display:flex; gap:7px; }
+  .renda-form-date{
+    flex:1; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:9px; padding:9px 12px; color-scheme:dark;
+    color:#fff; font-family:'Manrope',sans-serif; font-size:13px; font-weight:600; outline:none;
+    transition:border-color .2s, background .2s;
+  }
+  .renda-form-date:focus{ border-color:var(--blue-light); background:rgba(255,255,255,0.15); }
   .renda-currency-wrap{
     flex:1; display:flex; align-items:center; gap:6px;
     background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
@@ -453,7 +606,7 @@
   }
   .renda-currency-wrap input::placeholder{ color:rgba(255,255,255,0.35); }
   .btn-renda-save{
-    background:var(--blue); color:#fff; border:none;
+    flex:1; background:var(--blue); color:#fff; border:none;
     border-radius:9px; padding:9px 16px; cursor:pointer;
     font-family:'Manrope',sans-serif; font-size:13px; font-weight:800;
     transition:opacity .2s; white-space:nowrap;
@@ -489,7 +642,12 @@
     border-radius:var(--radius-lg); padding:28px 32px; overflow:hidden;
   }
   .chart-bars-area{ display:flex; flex-direction:column; gap:13px; }
-  .chart-bar-row{ display:flex; align-items:center; gap:14px; }
+  .chart-bar-row{
+    display:flex; align-items:center; gap:14px;
+    cursor:pointer; border-radius:8px; padding:4px 6px; margin:-4px -6px;
+    transition:background .15s;
+  }
+  .chart-bar-row:hover{ background:rgba(33,140,201,0.06); }
   .chart-bar-name{ width:150px; font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
   .chart-bar-track{ flex:1; height:10px; background:#eef1f6; border-radius:100px; overflow:hidden; }
   .chart-bar-fill{ height:100%; border-radius:100px; transition:width .5s ease; }
@@ -566,12 +724,20 @@
   .auth-msg.error{ color:#ff9d90; }
   .auth-msg.success{ color:#7ee0b0; }
   .btn-logout{
-    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.18);
-    color:rgba(255,255,255,0.75); padding:8px 16px; border-radius:100px;
+    background:#fff; border:1px solid var(--border);
+    color:var(--text-soft); padding:9px 16px; border-radius:100px;
     font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;
-    transition:background .2s, color .2s;
+    transition:background .2s, color .2s, border-color .2s;
   }
-  .btn-logout:hover{ background:rgba(255,255,255,0.2); color:#fff; }
+  .btn-logout:hover{ border-color:var(--neg); color:var(--neg); background:rgba(214,67,47,0.04); }
+  .btn-historico{
+    background:#fff; border:1px solid var(--border);
+    color:var(--navy); padding:9px 16px; border-radius:100px;
+    font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;
+    text-decoration:none; display:inline-block;
+    transition:background .2s, color .2s, border-color .2s;
+  }
+  .btn-historico:hover{ border-color:var(--blue); color:var(--blue); background:rgba(33,140,201,0.04); }
 </style>
 </head>
 <body>
@@ -616,8 +782,16 @@
     </div>
     <div class="topbar-right">
       <div class="month-tag" id="monthTag">—</div>
+      <a class="btn-historico" href="historico.html">Histórico</a>
       <button class="btn-logout" id="logoutBtn" type="button">Sair</button>
     </div>
+  </div>
+
+  <div class="period-filter" id="periodFilter">
+    <button type="button" class="period-tab" data-period="hoje">Hoje</button>
+    <button type="button" class="period-tab" data-period="semana">Esta Semana</button>
+    <button type="button" class="period-tab" data-period="mes">Este Mês</button>
+    <button type="button" class="period-tab active" data-period="todos">Todos</button>
   </div>
 
   <div class="hero-grid">
@@ -630,6 +804,7 @@
       <div class="balance-sub">
         <span>Total de gastos: <b id="totalGastosMini">R$ 0,00</b></span>
         <span>Rendas extras: <b id="totalRendasMini">R$ 0,00</b></span>
+        <span>Guardado em metas: <b id="totalMetasMini">R$ 0,00</b></span>
         <span>Itens preenchidos: <b id="itensPreenchidos">0/3</b></span>
       </div>
 
@@ -646,10 +821,13 @@
         <div class="renda-form" id="rendaForm">
           <input class="renda-form-name" id="rendaNome" type="text" placeholder="Ex: Freela, Bônus, Venda…" maxlength="40" autocomplete="off">
           <div class="renda-form-row">
+            <input class="renda-form-date" id="rendaData" type="date">
             <div class="renda-currency-wrap">
               <span>R$</span>
               <input id="rendaValor" type="text" inputmode="numeric" placeholder="0,00" autocomplete="off">
             </div>
+          </div>
+          <div class="renda-form-row">
             <button class="btn-renda-save" id="btnRendaSave" type="button">Salvar</button>
             <button class="btn-renda-cancel" id="btnRendaCancel" type="button">&#215;</button>
           </div>
@@ -685,6 +863,20 @@
   <div class="expenses-grid" id="expensesGrid"></div>
 
   <div class="section-head" style="margin-top:40px">
+    <h2>Metas de Poupança</h2>
+    <span class="count">Guarde dinheiro pra um objetivo</span>
+  </div>
+
+  <div class="expenses-grid" id="metasGrid"></div>
+
+  <div class="section-head" style="margin-top:40px">
+    <h2>Cartões de Crédito</h2>
+    <span class="count">Fatura, limite e vencimento num só lugar</span>
+  </div>
+
+  <div class="expenses-grid" id="cardsGrid"></div>
+
+  <div class="section-head" style="margin-top:40px">
     <h2>Distribuição de Gastos</h2>
     <span class="count">Análise visual do mês</span>
   </div>
@@ -694,7 +886,7 @@
     </div>
   </div>
 
-  <div class="footnote">Feito por <b>Kadosh Tech</b> — uso pessoal, cálculo 100% local no seu navegador.</div>
+  <div class="footnote">Desenvolvido por <a href="https://kadosh-tech.vercel.app/" target="_blank" rel="noopener noreferrer">Kadosh Tech</a></div>
 
 </div>
 
@@ -704,24 +896,132 @@
     <button class="modal-close-btn" id="modalCloseBtn" aria-label="Fechar">&#215;</button>
 
     <div class="modal-step active" data-step="add-form">
-      <div class="add-form-title">Adicionar Gasto</div>
-      <p class="add-form-sub">Crie uma categoria personalizada.</p>
+      <div class="add-form-title">Nova Categoria</div>
+      <p class="add-form-sub">Crie uma categoria personalizada. Os lançamentos você adiciona depois, direto no card.</p>
       <form id="addExpenseForm" novalidate>
         <div class="form-row">
           <label class="form-lbl" for="customExpenseName">Nome da categoria</label>
           <input class="form-ctrl" id="customExpenseName" type="text" placeholder="Ex: Plano de Saúde, IPTU, Pet…" maxlength="40" autocomplete="off">
         </div>
         <div class="form-row">
-          <label class="form-lbl" for="customExpenseValue">Valor inicial (opcional)</label>
-          <div class="form-currency-row">
-            <span>R$</span>
-            <input id="customExpenseValue" type="text" inputmode="numeric" placeholder="0,00" autocomplete="off">
+          <label class="form-lbl">Isso é Fixo ou Variável?</label>
+          <div class="tipo-toggle" id="customExpenseTipoToggle">
+            <button type="button" class="tipo-toggle-btn" data-tipo="Fixo">Fixo</button>
+            <button type="button" class="tipo-toggle-btn" data-tipo="Variável">Variável</button>
           </div>
         </div>
-        <button type="submit" class="btn-add-expense">+ Adicionar à Lista</button>
+        <div class="form-row">
+          <label class="form-lbl" for="customExpenseVencimento">Dia de vencimento (opcional)</label>
+          <input class="form-ctrl" id="customExpenseVencimento" type="number" inputmode="numeric" min="1" max="31" placeholder="Ex: 10">
+        </div>
+        <button type="submit" class="btn-add-expense">+ Criar Categoria</button>
       </form>
     </div>
 
+  </div>
+</div>
+
+<!-- ========== LANÇAMENTOS MODAL ========== -->
+<div class="premium-overlay" id="entriesOverlay" role="dialog" aria-modal="true">
+  <div class="premium-modal">
+    <button class="modal-close-btn" id="entriesCloseBtn" aria-label="Fechar">&#215;</button>
+
+    <div class="add-form-title" id="entriesCategoryTitle">Lançamentos</div>
+    <p class="add-form-sub" id="entriesModalSub">Cada lançamento é um item — pode adicionar quantos precisar nesta categoria.</p>
+
+    <form id="addEntryForm" novalidate>
+      <div class="entry-form-row">
+        <div class="form-row">
+          <label class="form-lbl" for="entryData">Data</label>
+          <input class="form-ctrl" id="entryData" type="date">
+        </div>
+        <div class="form-row">
+          <label class="form-lbl" for="entryValor">Valor</label>
+          <div class="form-currency-row">
+            <span>R$</span>
+            <input id="entryValor" type="text" inputmode="numeric" placeholder="0,00" autocomplete="off">
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-lbl" for="entryDescricao">Descrição</label>
+        <input class="form-ctrl" id="entryDescricao" type="text" placeholder="Ex: Detalhe do gasto…" maxlength="60" autocomplete="off">
+      </div>
+      <button type="submit" class="btn-add-expense">+ Adicionar Lançamento</button>
+    </form>
+
+    <div class="entry-history" id="entryHistory">
+      <div class="entry-history-empty">Nenhum lançamento neste mês ainda.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== NOVA META MODAL ========== -->
+<div class="premium-overlay" id="addGoalOverlay" role="dialog" aria-modal="true">
+  <div class="premium-modal">
+    <button class="modal-close-btn" id="addGoalCloseBtn" aria-label="Fechar">&#215;</button>
+    <div class="add-form-title">Nova Meta</div>
+    <p class="add-form-sub">Defina um objetivo e guarde dinheiro pra ele aos poucos.</p>
+    <form id="addGoalForm" novalidate>
+      <div class="form-row">
+        <label class="form-lbl" for="goalName">Nome da meta</label>
+        <input class="form-ctrl" id="goalName" type="text" placeholder="Ex: Férias, Reserva de emergência…" maxlength="40" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <label class="form-lbl" for="goalTarget">Valor alvo</label>
+        <div class="form-currency-row">
+          <span>R$</span>
+          <input id="goalTarget" type="text" inputmode="numeric" placeholder="0,00" autocomplete="off">
+        </div>
+      </div>
+      <button type="submit" class="btn-add-expense">+ Criar Meta</button>
+    </form>
+  </div>
+</div>
+
+<!-- ========== NOVO CARTÃO MODAL ========== -->
+<div class="premium-overlay" id="addCardOverlay" role="dialog" aria-modal="true">
+  <div class="premium-modal">
+    <button class="modal-close-btn" id="addCardCloseBtn" aria-label="Fechar">&#215;</button>
+    <div class="add-form-title">Novo Cartão</div>
+    <p class="add-form-sub">Compras no cartão viram lançamentos normais — o card só acompanha fatura, limite e vencimento.</p>
+    <form id="addCardForm" novalidate>
+      <div class="form-row">
+        <label class="form-lbl" for="cardName">Nome do cartão</label>
+        <input class="form-ctrl" id="cardName" type="text" placeholder="Ex: Nubank, Inter, C6…" maxlength="40" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <label class="form-lbl" for="cardLimite">Limite</label>
+        <div class="form-currency-row">
+          <span>R$</span>
+          <input id="cardLimite" type="text" inputmode="numeric" placeholder="0,00" autocomplete="off">
+        </div>
+      </div>
+      <div class="entry-form-row">
+        <div class="form-row">
+          <label class="form-lbl" for="cardFechamento">Fechamento</label>
+          <input class="form-ctrl" id="cardFechamento" type="number" inputmode="numeric" min="1" max="31" placeholder="Ex: 20">
+        </div>
+        <div class="form-row">
+          <label class="form-lbl" for="cardVencimento">Vencimento</label>
+          <input class="form-ctrl" id="cardVencimento" type="number" inputmode="numeric" min="1" max="31" placeholder="Ex: 27">
+        </div>
+      </div>
+      <button type="submit" class="btn-add-expense">+ Criar Cartão</button>
+    </form>
+  </div>
+</div>
+
+<!-- ========== CONFIRM MODAL (genérico) ========== -->
+<div class="premium-overlay" id="confirmOverlay" role="dialog" aria-modal="true">
+  <div class="premium-modal confirm-modal">
+    <div class="add-form-title" id="confirmTitle">Confirmar</div>
+    <p class="add-form-sub" id="confirmMessage">Tem certeza?</p>
+    <div class="confirm-actions">
+      <button type="button" class="btn-confirm-cancel" id="confirmCancelBtn">Cancelar</button>
+      <button type="button" class="btn-confirm-ok" id="confirmOkBtn">Confirmar</button>
+    </div>
   </div>
 </div>
 
@@ -733,7 +1033,9 @@
     agua: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c3.5 4.5 6.5 8.2 6.5 12A6.5 6.5 0 1 1 5.5 14.5c0-3.8 3-7.5 6.5-12Z"/></svg>`,
     luz: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/></svg>`,
     internet: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a15.5 15.5 0 0 1 20 0"/><path d="M5.5 12.5a10.5 10.5 0 0 1 13 0"/><path d="M9 16.3a5.5 5.5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1.1" fill="currentColor" stroke="none"/></svg>`,
-    outro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>`
+    outro: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>`,
+    meta: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.2"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>`,
+    cartao: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19"/><path d="M6 15h4"/></svg>`
   };
 
   const expensesData = [
@@ -743,17 +1045,47 @@
   ];
 
   const grid = document.getElementById('expensesGrid');
+  const metasGrid = document.getElementById('metasGrid');
+  const cardsGrid = document.getElementById('cardsGrid');
 
   const pencilSVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>`;
   const trashSVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+  const checkSVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const closeSVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>`;
 
   let deletedIds = new Set();
 
+  // item: { id, name, type, icon } — origem única é a linha da categoria no banco
+  // (ver loadFromSupabase). O card não guarda mais um valor único digitado —
+  // cada categoria pode ter vários lançamentos (data/valor/descrição, ver
+  // expenseEntries); o total exibido no card é sempre derivado, calculado
+  // em recalc() a partir de gastos[id] (que por sua vez soma os lançamentos
+  // dentro do período ativo do filtro — ver recomputeGastosFromEntries).
+  //
+  // Meta (tipo === 'Meta') é a MESMA categoria/mesmo ledger, só reaproveitado:
+  // vai pro grid de metas em vez do grid de gastos, o botão de lançar chama
+  // "Aporte" em vez de "Gasto", e a barra mostra progresso guardado/alvo em
+  // vez de consumo do saldo — tudo isso é só apresentação, o modal de
+  // lançamentos e o cálculo de total (gastos[id]) são idênticos aos de gasto.
+  //
+  // Cartão (tipo === 'Cartao') segue o mesmo princípio: mesma categoria,
+  // mesmo ledger de lançamentos (cada compra é um lançamento comum) — só
+  // ganha grid própria, barra "fatura atual/limite" (como a de Meta) e uma
+  // linha de vencimento que vira alerta visual a 5 dias ou menos do
+  // vencimento (ver cardData/daysUntilDue).
+  const CARTAO_TYPE_LABEL = 'Cartão de Crédito';
   function renderExpenseCard(item){
     if(deletedIds.has(item.id)) return;
+    const isGoal = item.type === 'Meta';
+    const isCard = item.type === 'Cartao';
     const card = document.createElement('div');
-    card.className = 'expense-card';
+    card.className = 'expense-card'
+      + (isGoal ? ' is-goal' : '')
+      + (isCard ? ' is-card' : '')
+      + (item.type === 'Fixo' ? ' tipo-fixo' : '')
+      + (item.type === 'Variável' ? ' tipo-variavel' : '');
     card.dataset.id = item.id;
+    card.dataset.tipo = item.type;
     card.innerHTML = `
       <button class="card-trash-btn" type="button" title="Remover card">${trashSVG}</button>
       <div class="expense-top">
@@ -763,25 +1095,27 @@
             <div class="expense-name" data-card-name>${item.name}</div>
             <button class="name-edit-btn" type="button" title="Renomear">${pencilSVG}</button>
           </div>
-          <div class="expense-type">${item.type}</div>
+          <div class="expense-type">${isCard ? CARTAO_TYPE_LABEL : item.type}</div>
         </div>
       </div>
-      <div class="expense-input-row">
-        <span>R$</span>
-        <input type="text" inputmode="numeric" placeholder="0,00" data-expense-input>
+      ${!isGoal ? `<div class="card-due-line" data-card-due></div>` : ''}
+      <div class="expense-total-row">
+        <span class="expense-total-value" data-expense-total>R$ 0,00</span>
+        <button class="expense-entry-count" type="button" data-entry-count title="Ver lançamentos">0 lançamentos</button>
       </div>
+      <button class="btn-add-lancamento" type="button" data-add-entry>+ Adicionar ${isGoal ? 'Aporte' : isCard ? 'Compra' : 'Gasto'}</button>
       <div class="expense-bar-track"><div class="expense-bar-fill" data-expense-bar></div></div>
     `;
-    grid.appendChild(card);
+    const targetGrid = isGoal ? metasGrid : isCard ? cardsGrid : grid;
+    const targetAddTile = isGoal ? addGoalCard : isCard ? addCardTile : addCard;
+    targetGrid.insertBefore(card, targetAddTile);
     card.querySelector('.card-trash-btn').addEventListener('click', () => deleteExpenseCard(card, item.id));
+    card.querySelector('[data-add-entry]').addEventListener('click', () => openEntriesModal(item.id));
+    card.querySelector('[data-entry-count]').addEventListener('click', () => openEntriesModal(item.id, { historyOnly: true }));
+    if(isGoal || isCard){
+      card.querySelector('.expense-bar-track').addEventListener('click', () => openEntriesModal(item.id, { historyOnly: true }));
+    }
     attachNameEdit(card, item.id);
-    const inp = card.querySelector('[data-expense-input]');
-    attachCurrencyMask(inp, val => {
-      gastos[item.id] = val;
-      card.classList.toggle('has-value', val > 0);
-      queueSaveExpense(item.id, val);
-      recalc();
-    });
   }
 
   // add custom card (visual placeholder — criação de categoria personalizada)
@@ -789,6 +1123,18 @@
   addCard.className = 'add-custom-card';
   addCard.id = 'addCustomCard';
   addCard.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Adicionar gasto personalizado`;
+
+  // add goal card (visual placeholder — criação de meta)
+  const addGoalCard = document.createElement('div');
+  addGoalCard.className = 'add-custom-card';
+  addGoalCard.id = 'addGoalCard';
+  addGoalCard.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nova Meta`;
+
+  // add card tile (visual placeholder — criação de cartão de crédito)
+  const addCardTile = document.createElement('div');
+  addCardTile.className = 'add-custom-card';
+  addCardTile.id = 'addCardTile';
+  addCardTile.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Novo Cartão`;
 
   // ---------- MÁSCARA DE MOEDA ----------
   function toCentsFromDigits(digits){
@@ -811,7 +1157,30 @@
   // ---------- ESTADO ----------
   let saldoInicial = 0;
   let rendaExtras = [];
+  // gastos[categoriaId] é sempre DERIVADO — a soma dos lançamentos daquela
+  // categoria dentro do período ativo do filtro. Nunca é escrito direto;
+  // ver recomputeGastosFromEntries().
   const gastos = {};
+  // Lançamentos individuais de todas as categorias no mês (id, categoria_id,
+  // valor, descricao, data) — a fonte de verdade por trás de `gastos`.
+  let expenseEntries = [];
+  // Filtro de período do dashboard inteiro: 'hoje' | 'semana' | 'mes' | 'todos'
+  let activePeriod = 'todos';
+  // goalTargets[categoriaId] = valor_alvo — só existe pra categorias tipo 'Meta'.
+  // gastos[categoriaId] (a mesma soma de lançamentos de sempre) já representa
+  // o "guardado"; goalTargets só guarda o alvo pra calcular o progresso.
+  let goalTargets = {};
+  // cardData[categoriaId] = { limite, fechamento } — só existe pra categorias
+  // tipo 'Cartao'. gastos[categoriaId] já representa a fatura do mês
+  // corrente (soma dos lançamentos); cardData guarda o limite (pra barra de
+  // progresso) e o dia de fechamento.
+  let cardData = {};
+  // vencimentos[categoriaId] = dia do mês (1-31) — campo opcional pra
+  // QUALQUER tipo de categoria (padrão, personalizada, Cartão). Se a
+  // categoria não tem entrada aqui, nenhum alerta de vencimento é exibido.
+  // Cartão sempre tem entrada (obrigatório na criação); as demais só se o
+  // usuário preencher. Meta não usa isso — não é uma "conta a pagar".
+  let vencimentos = {};
 
   const saldoInput = document.getElementById('saldoInicial');
   const resultValueEl = document.getElementById('resultValue');
@@ -832,15 +1201,108 @@
     const d = String(date.getDate()).padStart(2,'0');
     return `${y}-${m}-${d}`;
   }
+  // Formata "YYYY-MM-DD" -> "DD/MM" manipulando a string direto, sem passar
+  // por `new Date()` — evita qualquer risco de fuso na exibição.
+  function formatDateShort(dateStr){
+    if(!dateStr) return '';
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}`;
+  }
   function mesReferenciaAtual(){
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
   }
   const MES_REF = mesReferenciaAtual();
 
+  // Quantos dias faltam pro próximo vencimento de fatura (dia fixo do mês).
+  // Se o dia já passou neste mês, o vencimento é o mesmo dia no mês seguinte.
+  function daysUntilDue(diaVencimento){
+    if(!diaVencimento) return null;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    let due = new Date(today.getFullYear(), today.getMonth(), diaVencimento);
+    if(due < today) due = new Date(today.getFullYear(), today.getMonth() + 1, diaVencimento);
+    return Math.round((due - today) / 86400000);
+  }
+
   const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const now = new Date();
   monthTag.textContent = `${meses[now.getMonth()]} / ${now.getFullYear()}`;
+
+  // ---------- FILTRO DE PERÍODO (Hoje / Esta Semana / Este Mês / Todos) ----------
+  // Segunda-feira como primeiro dia da semana (convenção BR/ISO).
+  function currentWeekBounds(){
+    const today = new Date();
+    const dow = today.getDay(); // 0=domingo..6=sábado
+    const diffToMonday = (dow === 0 ? -6 : 1 - dow);
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diffToMonday);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { start: toDateStr(monday), end: toDateStr(sunday) };
+  }
+
+  // Compara strings "YYYY-MM-DD" direto (funciona porque o formato ISO é
+  // ordenável lexicograficamente) — nunca passa por new Date(dataString),
+  // que é a fonte clássica de bug de fuso horário.
+  function isInActivePeriod(dateStr){
+    if(activePeriod === 'todos') return true;
+    if(!dateStr) return false;
+    if(activePeriod === 'hoje') return dateStr === toDateStr(new Date());
+    if(activePeriod === 'mes') return dateStr.slice(0,7) === MES_REF.slice(0,7);
+    if(activePeriod === 'semana'){
+      const { start, end } = currentWeekBounds();
+      return dateStr >= start && dateStr <= end;
+    }
+    return true;
+  }
+
+  function entriesForCategory(categoryId){
+    return expenseEntries.filter(e => e.categoria_id === categoryId);
+  }
+
+  // Reconstrói gastos[] somando só os lançamentos que caem no período ativo.
+  // Roda sempre que: os lançamentos carregam, um lançamento é adicionado ou
+  // removido, ou o filtro de período muda.
+  function recomputeGastosFromEntries(){
+    for(const key in gastos) gastos[key] = 0;
+    expenseEntries.forEach(entry => {
+      // defesa: só soma lançamento de categoria que existe e está com card
+      // na tela agora — se algum lançamento órfão (de categoria deletada)
+      // escapar da limpeza no banco, ele nunca conta no total.
+      if(!(entry.categoria_id in gastos)) return;
+      if(!isInActivePeriod(entry.data)) return;
+      gastos[entry.categoria_id] = (gastos[entry.categoria_id] || 0) + entry.valor;
+    });
+  }
+
+  function addExpenseEntry(categoryId, valor, descricao, data){
+    const id = (crypto.randomUUID ? crypto.randomUUID() : 'entry_' + Date.now());
+    expenseEntries.push({ id, categoria_id: categoryId, valor, descricao, data });
+    dbInsertExpenseEntry(id, categoryId, valor, descricao, data);
+    recomputeGastosFromEntries();
+    recalc();
+  }
+
+  function deleteExpenseEntry(entryId, categoryId){
+    expenseEntries = expenseEntries.filter(e => e.id !== entryId);
+    dbDeleteExpenseEntry(entryId);
+    recomputeGastosFromEntries();
+    recalc();
+    renderEntryHistory(categoryId);
+  }
+
+  function updateExpenseEntry(entryId, categoryId, valor, descricao, data){
+    const entry = expenseEntries.find(e => e.id === entryId);
+    if(!entry) return;
+    entry.valor = valor;
+    entry.descricao = descricao;
+    entry.data = data;
+    dbUpdateExpenseEntry(entryId, valor, descricao, data);
+    recomputeGastosFromEntries();
+    recalc();
+    renderEntryHistory(categoryId);
+  }
 
   attachCurrencyMask(saldoInput, (val) => {
     saldoInicial = val;
@@ -854,27 +1316,93 @@
   }
 
   function recalc(){
+    // gastos[] já vem filtrado pelo período ativo (recomputeGastosFromEntries).
+    // Rendas extras são filtradas aqui direto, na hora de somar.
+    // Total de gastos inclui metas de propósito — aporte em meta é gasto pra
+    // efeito do saldo, exatamente como um gasto comum (não é bug).
     const totalGastos = Object.values(gastos).reduce((a,b) => a+b, 0);
-    const totalRendas = rendaExtras.reduce((a,r) => a+r.value, 0);
+    const totalMetas = Object.keys(goalTargets).reduce((a,id) => a + (gastos[id] || 0), 0);
+    const rendasNoPeriodo = rendaExtras.filter(r => isInActivePeriod(r.data));
+    const totalRendas = rendasNoPeriodo.reduce((a,r) => a+r.value, 0);
     const saldoEfetivo = saldoInicial + totalRendas;
     const saldoFinal   = saldoEfetivo - totalGastos;
-    const preenchidos  = Object.values(gastos).filter(v => v > 0).length;
+    // "Itens preenchidos" é sobre a seção de Gastos Fixos & Variáveis — metas
+    // e cartões têm o próprio indicador de progresso, não entram nessa contagem.
+    const gastosKeys  = Object.keys(gastos).filter(k => !(k in goalTargets) && !(k in cardData));
+    const preenchidos = gastosKeys.filter(k => gastos[k] > 0).length;
 
     resultValueEl.textContent = money(saldoFinal);
     totalGastosMiniEl.textContent = money(totalGastos);
     const totalRendasMiniEl = document.getElementById('totalRendasMini');
     if(totalRendasMiniEl) totalRendasMiniEl.textContent = money(totalRendas);
-    const totalCards = Object.keys(gastos).length;
+    const totalMetasMiniEl = document.getElementById('totalMetasMini');
+    if(totalMetasMiniEl) totalMetasMiniEl.textContent = money(totalMetas);
+    const totalCards = gastosKeys.length;
     itensPreenchidosEl.textContent = `${preenchidos}/${totalCards}`;
     sectionCountEl.textContent = `${preenchidos} de ${totalCards} preenchidos`;
 
-    // barra por card (relativo ao saldo efetivo)
+    // chips de renda extra: só mostra as que caem no período ativo
+    const rendaChipsEl = document.getElementById('rendaChips');
+    if(rendaChipsEl){
+      rendaChipsEl.innerHTML = '';
+      rendasNoPeriodo.forEach(renderRendaChip);
+    }
+
+    // total exibido, contador de lançamentos e barra por card
+    // (gasto comum: barra relativa ao saldo efetivo; meta: barra de
+    // progresso guardado/alvo; cartão: barra de fatura atual/limite —
+    // mesmo card, mesmo loop, só o cálculo muda)
     document.querySelectorAll('.expense-card').forEach(card => {
       const id = card.dataset.id;
+      const valor = gastos[id] || 0;
+      const isGoal = card.classList.contains('is-goal');
+      const isCard = card.classList.contains('is-card');
+      const totalEl = card.querySelector('[data-expense-total]');
+      if(totalEl){
+        totalEl.textContent = isGoal ? `${money(valor)} de ${money(goalTargets[id] || 0)}`
+          : isCard ? `${money(valor)} de ${money((cardData[id] || {}).limite || 0)}`
+          : money(valor);
+      }
+      const countEl = card.querySelector('[data-entry-count]');
+      if(countEl){
+        const n = entriesForCategory(id).filter(e => isInActivePeriod(e.data)).length;
+        countEl.textContent = n === 1 ? '1 lançamento' : `${n} lançamentos`;
+      }
+      card.classList.toggle('has-value', valor > 0);
+      // Vencimento é opcional pra qualquer categoria (menos Meta) — se não
+      // tiver dia configurado em vencimentos[id], a linha fica escondida e
+      // nenhum alerta aparece (comportamento igual a antes da categoria
+      // nunca ter tido vencimento).
+      if(!isGoal){
+        const vencimento = vencimentos[id];
+        const dueLine = card.querySelector('[data-card-due]');
+        const diff = daysUntilDue(vencimento);
+        const dueSoon = diff !== null && diff <= 5;
+        card.classList.toggle('due-soon', dueSoon);
+        if(dueLine){
+          if(!vencimento){
+            dueLine.style.display = 'none';
+            dueLine.textContent = '';
+          } else {
+            dueLine.style.display = '';
+            dueLine.textContent = dueSoon
+              ? (diff === 0 ? 'Vence hoje' : `Vence em ${diff} dia${diff === 1 ? '' : 's'}`)
+              : `Vencimento: dia ${vencimento}`;
+          }
+        }
+      }
       const bar = card.querySelector('[data-expense-bar]');
       if(!bar) return;
-      const base = saldoEfetivo > 0 ? saldoEfetivo : 1;
-      bar.style.width = Math.min(100, ((gastos[id] || 0) / base) * 100) + '%';
+      if(isGoal){
+        const alvo = goalTargets[id] || 0;
+        bar.style.width = Math.min(100, alvo > 0 ? (valor / alvo) * 100 : 0) + '%';
+      } else if(isCard){
+        const limite = (cardData[id] || {}).limite || 0;
+        bar.style.width = Math.min(100, limite > 0 ? (valor / limite) * 100 : 0) + '%';
+      } else {
+        const base = saldoEfetivo > 0 ? saldoEfetivo : 1;
+        bar.style.width = Math.min(100, (valor / base) * 100) + '%';
+      }
     });
 
     // progress geral + estado
@@ -922,14 +1450,31 @@
     _debounceTimers[key] = setTimeout(fn, ms);
   }
 
-  function queueSaveExpense(categoryKey, valor){
-    debounceKeyed('expense_' + categoryKey, async () => {
-      if(!currentUser) return;
-      const { error } = await sb.from('expenses').upsert({
-        user_id: currentUser.id, mes_referencia: MES_REF, categoria_id: categoryKey, valor
-      }, { onConflict: 'user_id,mes_referencia,categoria_id' });
-      if(error) console.error('Erro ao salvar gasto no Supabase:', error);
+  // Cada gasto agora é um lançamento independente (insert), não mais um
+  // valor único por categoria/mês (upsert) — várias linhas por categoria
+  // são esperadas e não colidem.
+  async function dbInsertExpenseEntry(id, categoriaId, valor, descricao, data){
+    if(!currentUser) return;
+    const { error } = await sb.from('expenses').insert({
+      id, user_id: currentUser.id, mes_referencia: MES_REF,
+      categoria_id: categoriaId, valor, descricao, data
     });
+    if(error) console.error('Erro ao salvar lançamento no Supabase:', error);
+  }
+
+  async function dbDeleteExpenseEntry(id){
+    if(!currentUser) return;
+    const { error } = await sb.from('expenses').delete().eq('id', id).eq('user_id', currentUser.id);
+    if(error) console.error('Erro ao remover lançamento no Supabase:', error);
+  }
+
+  // Update na mesma linha (por id) — preserva o registro em vez de
+  // delete + insert, então o id do lançamento nunca muda.
+  async function dbUpdateExpenseEntry(id, valor, descricao, data){
+    if(!currentUser) return;
+    const { error } = await sb.from('expenses').update({ valor, descricao, data })
+      .eq('id', id).eq('user_id', currentUser.id);
+    if(error) console.error('Erro ao atualizar lançamento no Supabase:', error);
   }
 
   function queueSaveBalance(valor){
@@ -952,14 +1497,24 @@
     if(error) console.error('Erro ao semear categorias padrão no Supabase:', error);
   }
 
-  async function dbInsertCategory(key, nome, cents){
+  // vencimento: opcional pra qualquer tipo — ignorado se cardOpts também
+  // vier preenchido (Cartão já traz o próprio vencimento dentro de cardOpts).
+  async function dbInsertCategory(key, nome, tipo = 'Personalizado', valorAlvo = null, cardOpts = null, vencimento = null){
     if(!currentUser) return;
-    const { error } = await sb.from('categories').insert({
+    const row = {
       user_id: currentUser.id, category_key: key, nome,
-      tipo: 'Personalizado', icone: 'outro', ordem: 999, is_default: false
-    });
+      tipo, icone: tipo === 'Meta' ? 'meta' : tipo === 'Cartao' ? 'cartao' : 'outro',
+      ordem: 999, is_default: false, valor_alvo: valorAlvo
+    };
+    if(cardOpts){
+      row.limite_cartao = cardOpts.limite;
+      row.dia_fechamento = cardOpts.fechamento;
+      row.dia_vencimento = cardOpts.vencimento;
+    } else if(vencimento){
+      row.dia_vencimento = vencimento;
+    }
+    const { error } = await sb.from('categories').insert(row);
     if(error){ console.error('Erro ao criar categoria no Supabase:', error); return; }
-    if(cents > 0) queueSaveExpense(key, cents / 100);
   }
 
   async function dbRenameCategory(key, novoNome){
@@ -969,6 +1524,27 @@
     if(error) console.error('Erro ao renomear categoria no Supabase:', error);
   }
 
+  // Update na mesma linha de `categories` (por category_key) — nome +
+  // limite/fechamento/vencimento do cartão, tudo de uma vez.
+  async function dbUpdateCardCategory(key, novoNome, limite, fechamento, vencimento){
+    if(!currentUser) return;
+    const { error } = await sb.from('categories').update({
+      nome: novoNome, limite_cartao: limite, dia_fechamento: fechamento, dia_vencimento: vencimento
+    }).eq('user_id', currentUser.id).eq('category_key', key);
+    if(error) console.error('Erro ao atualizar cartão no Supabase:', error);
+  }
+
+  // Update pra categorias comuns (Fixo/Variável/Personalizado) — nome +
+  // vencimento opcional. vencimento null limpa o campo (usuário removeu o
+  // valor que tinha preenchido antes).
+  async function dbUpdateCategoryVencimento(key, novoNome, vencimento){
+    if(!currentUser) return;
+    const { error } = await sb.from('categories').update({
+      nome: novoNome, dia_vencimento: vencimento
+    }).eq('user_id', currentUser.id).eq('category_key', key);
+    if(error) console.error('Erro ao atualizar categoria no Supabase:', error);
+  }
+
   async function dbMarkCategoryDeleted(key){
     if(!currentUser) return;
     const { error } = await sb.from('categories').update({ deleted: true })
@@ -976,11 +1552,31 @@
     if(error) console.error('Erro ao remover categoria no Supabase:', error);
   }
 
+  // Apaga de vez (não é soft-delete) todos os lançamentos da categoria — sem
+  // limite de mês, porque a categoria em si está sumindo pra sempre e um
+  // lançamento órfão de categoria deletada não deve sobreviver em nenhum mês.
+  async function dbDeleteExpensesByCategory(categoryId){
+    if(!currentUser) return;
+    const { error } = await sb.from('expenses').delete()
+      .eq('user_id', currentUser.id).eq('categoria_id', categoryId);
+    if(error) console.error('Erro ao remover lançamentos da categoria no Supabase:', error);
+  }
+
+  // Usado por "Limpar Tudo": apaga os lançamentos de TODAS as categorias do
+  // usuário, mas só do mês de referência atual — as categorias em si (e o
+  // histórico de outros meses, se algum dia existir) não são tocadas.
+  async function dbDeleteAllExpensesForMonth(){
+    if(!currentUser) return;
+    const { error } = await sb.from('expenses').delete()
+      .eq('user_id', currentUser.id).eq('mes_referencia', MES_REF);
+    if(error) console.error('Erro ao limpar lançamentos do mês no Supabase:', error);
+  }
+
   // ========== SUPABASE — RENDA EXTRA ==========
-  async function dbInsertIncome(id, nome, valor){
+  async function dbInsertIncome(id, nome, valor, data){
     if(!currentUser) return;
     const { error } = await sb.from('extra_incomes').insert({
-      id, user_id: currentUser.id, mes_referencia: MES_REF, nome, valor
+      id, user_id: currentUser.id, mes_referencia: MES_REF, nome, valor, data
     });
     if(error) console.error('Erro ao salvar renda extra no Supabase:', error);
   }
@@ -992,49 +1588,38 @@
     if(error) console.error('Erro ao remover renda extra no Supabase:', error);
   }
 
-  function addCustomExpenseToDOM(id, name, cents){
-    const card = document.createElement('div');
-    card.className = 'expense-card' + (cents > 0 ? ' has-value' : '');
-    card.dataset.id = id;
-    card.innerHTML = `
-      <button class="card-trash-btn" type="button" title="Remover card">${trashSVG}</button>
-      <div class="expense-top">
-        <div class="expense-icon">${icons.outro}</div>
-        <div class="expense-info">
-          <div class="expense-name-wrap">
-            <div class="expense-name" data-card-name>${name}</div>
-            <button class="name-edit-btn" type="button" title="Renomear">${pencilSVG}</button>
-          </div>
-          <div class="expense-type">Personalizado</div>
-        </div>
-      </div>
-      <div class="expense-input-row">
-        <span>R$</span>
-        <input type="text" inputmode="numeric" placeholder="0,00" data-expense-input>
-      </div>
-      <div class="expense-bar-track"><div class="expense-bar-fill" data-expense-bar></div></div>
-    `;
-    grid.insertBefore(card, addCard);
-    const input = card.querySelector('[data-expense-input]');
-    if(cents > 0) input.value = formatFromCents(cents);
-    attachCurrencyMask(input, val => {
-      gastos[id] = val;
-      card.classList.toggle('has-value', val > 0);
-      queueSaveExpense(id, val);
-      recalc();
-    });
-    attachNameEdit(card, id);
-    card.querySelector('.card-trash-btn').addEventListener('click', () => deleteExpenseCard(card, id));
-  }
 
   // ========== SUPABASE — CARREGA TODO O ESTADO DO USUÁRIO/MÊS ==========
-  async function loadFromSupabase(){
+  // Wrapper contra chamadas concorrentes: o supabase-js às vezes dispara
+  // onAuthStateChange mais de uma vez em sequência rápida ao restaurar sessão
+  // (ex: INITIAL_SESSION seguido de SIGNED_IN num reload de página). Sem isso,
+  // duas chamadas sobrepostas limpam e repopulam o grid em paralelo e
+  // duplicam os cards — a limpeza no início de cada chamada não é suficiente
+  // sozinha, porque ela não protege contra uma segunda chamada que começa
+  // antes da primeira terminar.
+  let loadInFlight = null;
+  function loadFromSupabase(){
+    if(loadInFlight) return loadInFlight;
+    loadInFlight = loadFromSupabaseImpl().finally(() => { loadInFlight = null; });
+    return loadInFlight;
+  }
+
+  async function loadFromSupabaseImpl(){
     // limpa estado dinâmico antes de repopular — evita duplicar cards/chips
     // quando a função roda mais de uma vez na mesma sessão (ex: logout → login de novo)
     grid.innerHTML = '';
+    grid.appendChild(addCard); // reanexa já aqui: renderExpenseCard usa insertBefore(card, addCard)
+    metasGrid.innerHTML = '';
+    metasGrid.appendChild(addGoalCard);
+    cardsGrid.innerHTML = '';
+    cardsGrid.appendChild(addCardTile);
     document.getElementById('rendaChips').innerHTML = '';
     for(const key in gastos) delete gastos[key];
     rendaExtras = [];
+    expenseEntries = [];
+    goalTargets = {};
+    cardData = {};
+    vencimentos = {};
 
     const [catsRes, expRes, balRes, incRes] = await Promise.all([
       sb.from('categories').select('*').eq('user_id', currentUser.id).order('ordem'),
@@ -1055,59 +1640,52 @@
     }
 
     deletedIds = new Set(categories.filter(c => c.deleted).map(c => c.category_key));
-    const nameOverrides = {};
-    categories.forEach(c => { if(!c.deleted) nameOverrides[c.category_key] = c.nome; });
 
     if(balRes.data){
       saldoInicial = Number(balRes.data.saldo_inicial) || 0;
       if(saldoInicial > 0) saldoInput.value = formatFromCents(Math.round(saldoInicial * 100));
     }
 
-    // cards padrão (pulando os que o usuário deletou)
-    expensesData.forEach(item => {
-      if(!deletedIds.has(item.id)) gastos[item.id] = 0;
-      renderExpenseCard(item);
-    });
-    grid.appendChild(addCard);
+    // lançamentos do mês — cada linha de `expenses` agora é um item
+    // individual (id, categoria_id, valor, descricao, data), não mais um
+    // valor agregado por categoria. gastos[] é recalculado a partir daqui.
+    expenseEntries = (expRes.data || []).map(row => ({
+      id: row.id, categoria_id: row.categoria_id,
+      valor: Number(row.valor) || 0, descricao: row.descricao, data: row.data
+    }));
 
-    // aplica nomes renomeados nos cards padrão
-    Object.keys(nameOverrides).forEach(key => {
-      const card = document.querySelector(`.expense-card[data-id="${key}"]`);
-      if(!card) return;
-      const nameEl = card.querySelector('[data-card-name]');
-      if(nameEl) nameEl.textContent = nameOverrides[key];
-    });
-
-    // cards personalizados criados pelo usuário
-    categories.filter(c => !c.is_default && !c.deleted).forEach(c => {
+    // um card por categoria não deletada — direto da linha do banco, sem
+    // depender de expensesData (que só serve pra semear categoria nova em
+    // ensureDefaultCategories). Assim, categoria criada antes de uma redução
+    // do array padrão continua aparecendo normalmente.
+    categories.filter(c => !c.deleted).forEach(c => {
       gastos[c.category_key] = 0;
-      addCustomExpenseToDOM(c.category_key, c.nome, 0);
-    });
-
-    // valores de gastos lançados no mês
-    (expRes.data || []).forEach(row => {
-      const key = row.categoria_id;
-      if(deletedIds.has(key)) return;
-      const valor = Number(row.valor) || 0;
-      gastos[key] = valor;
-      const card = document.querySelector(`.expense-card[data-id="${key}"]`);
-      if(card){
-        const inp = card.querySelector('[data-expense-input]');
-        if(inp && valor > 0) inp.value = formatFromCents(Math.round(valor * 100));
-        card.classList.toggle('has-value', valor > 0);
+      if(c.tipo === 'Meta') goalTargets[c.category_key] = Number(c.valor_alvo) || 0;
+      if(c.tipo === 'Cartao'){
+        cardData[c.category_key] = {
+          limite: Number(c.limite_cartao) || 0,
+          fechamento: c.dia_fechamento
+        };
       }
+      // vencimento é opcional pra qualquer tipo (menos Meta) — só entra no
+      // mapa se realmente estiver preenchido no banco.
+      if(c.dia_vencimento) vencimentos[c.category_key] = c.dia_vencimento;
+      renderExpenseCard({ id: c.category_key, name: c.nome, type: c.tipo, icon: c.icone });
     });
+    recomputeGastosFromEntries();
 
-    // rendas extras
-    rendaExtras = (incRes.data || []).map(r => ({ id: r.id, name: r.nome, value: Number(r.valor) || 0 }));
-    rendaExtras.forEach(renderRendaChip);
+    // rendas extras (a exibição dos chips acontece em recalc(), chamado
+    // pelo caller logo após este load — ver onAuthStateChange)
+    rendaExtras = (incRes.data || []).map(r => ({ id: r.id, name: r.nome, value: Number(r.valor) || 0, data: r.data }));
   }
 
   // ========== CARD MANAGEMENT ==========
   function deleteExpenseCard(card, id){
     delete gastos[id];
     deletedIds.add(id);
+    expenseEntries = expenseEntries.filter(e => e.categoria_id !== id);
     dbMarkCategoryDeleted(id);
+    dbDeleteExpensesByCategory(id); // apaga de vez os lançamentos — não deixa órfão contando no total
     card.style.transition = 'opacity .25s ease, transform .25s ease';
     card.style.opacity = '0';
     card.style.transform = 'scale(0.92)';
@@ -1117,41 +1695,80 @@
     }, 260);
   }
 
+  // Apaga de vez os lançamentos de TODAS as categorias no mês de referência
+  // atual (as categorias em si continuam existindo, só ficam zeradas).
   function clearAllExpenses(){
-    document.querySelectorAll('[data-expense-input]').forEach(inp => {
-      inp.value = '';
-      const card = inp.closest('.expense-card');
-      if(card){ gastos[card.dataset.id] = 0; card.classList.remove('has-value'); }
-    });
+    expenseEntries = [];
+    dbDeleteAllExpensesForMonth();
+    recomputeGastosFromEntries();
     recalc();
   }
 
-  document.getElementById('btnClearAll')?.addEventListener('click', clearAllExpenses);
+  // ========== CONFIRM MODAL (genérico) ==========
+  const confirmOverlayEl = document.getElementById('confirmOverlay');
+  let confirmResolve = null;
+
+  function openConfirm({ title = 'Confirmar', message = 'Tem certeza?', confirmLabel = 'Confirmar' } = {}){
+    return new Promise(resolve => {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMessage').textContent = message;
+      document.getElementById('confirmOkBtn').textContent = confirmLabel;
+      confirmResolve = resolve;
+      confirmOverlayEl.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+
+  function closeConfirm(result){
+    confirmOverlayEl.classList.remove('open');
+    document.body.style.overflow = '';
+    if(confirmResolve){ confirmResolve(result); confirmResolve = null; }
+  }
+
+  document.getElementById('confirmCancelBtn')?.addEventListener('click', () => closeConfirm(false));
+  document.getElementById('confirmOkBtn')?.addEventListener('click', () => closeConfirm(true));
+  confirmOverlayEl.addEventListener('click', e => { if(e.target === confirmOverlayEl) closeConfirm(false); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && confirmOverlayEl.classList.contains('open')) closeConfirm(false); });
+
+  document.getElementById('btnClearAll')?.addEventListener('click', async () => {
+    const ok = await openConfirm({
+      title: 'Limpar Tudo',
+      message: 'Todos os valores digitados serão apagados. Tem certeza?',
+      confirmLabel: 'Apagar tudo'
+    });
+    if(ok) clearAllExpenses();
+  });
+
+  // ========== FILTRO DE PERÍODO ==========
+  document.querySelectorAll('.period-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activePeriod = btn.dataset.period;
+      document.querySelectorAll('.period-tab').forEach(b => b.classList.toggle('active', b === btn));
+      recomputeGastosFromEntries();
+      recalc();
+    });
+  });
 
   // ========== RENDA EXTRA ==========
   function renderRendaChip(renda){
     const chip = document.createElement('div');
     chip.className = 'renda-chip';
     chip.dataset.id = renda.id;
-    chip.innerHTML = `<span>${renda.name}: <b>${money(renda.value)}</b></span>
+    chip.innerHTML = `<span>${renda.name} <i>${formatDateShort(renda.data)}</i>: <b>${money(renda.value)}</b></span>
       <button class="renda-chip-x" type="button" title="Remover">&#215;</button>`;
     chip.querySelector('.renda-chip-x').addEventListener('click', () => removeRendaExtra(renda.id));
     document.getElementById('rendaChips').appendChild(chip);
   }
 
-  function addRendaExtra(name, value){
+  function addRendaExtra(name, value, data){
     const id = (crypto.randomUUID ? crypto.randomUUID() : 'renda_' + Date.now());
-    const renda = { id, name, value };
-    rendaExtras.push(renda);
-    renderRendaChip(renda);
-    dbInsertIncome(id, name, value);
-    recalc();
+    rendaExtras.push({ id, name, value, data });
+    dbInsertIncome(id, name, value, data);
+    recalc(); // recalc() redesenha os chips do zero (filtrados pelo período ativo)
   }
 
   function removeRendaExtra(id){
     rendaExtras = rendaExtras.filter(r => r.id !== id);
-    const chip = document.querySelector(`.renda-chip[data-id="${id}"]`);
-    if(chip) chip.remove();
     dbDeleteIncome(id);
     recalc();
   }
@@ -1160,13 +1777,17 @@
   document.getElementById('btnAddRenda')?.addEventListener('click', () => {
     const form = document.getElementById('rendaForm');
     form.classList.toggle('open');
-    if(form.classList.contains('open')) document.getElementById('rendaNome').focus();
+    if(form.classList.contains('open')){
+      document.getElementById('rendaData').value = toDateStr(new Date());
+      document.getElementById('rendaNome').focus();
+    }
   });
 
   document.getElementById('btnRendaCancel')?.addEventListener('click', () => {
     document.getElementById('rendaForm').classList.remove('open');
     document.getElementById('rendaNome').value = '';
     document.getElementById('rendaValor').value = '';
+    document.getElementById('rendaData').value = '';
   });
 
   attachCurrencyMask(document.getElementById('rendaValor'), () => {});
@@ -1175,11 +1796,13 @@
     const name  = document.getElementById('rendaNome').value.trim();
     const raw   = document.getElementById('rendaValor').value.replace(/\D/g,'');
     const value = raw ? parseInt(raw,10)/100 : 0;
+    const data  = document.getElementById('rendaData').value || toDateStr(new Date());
     if(!name || value <= 0) return;
-    addRendaExtra(name, value);
+    addRendaExtra(name, value, data);
     document.getElementById('rendaForm').classList.remove('open');
     document.getElementById('rendaNome').value = '';
     document.getElementById('rendaValor').value = '';
+    document.getElementById('rendaData').value = '';
   });
 
   // Save on Enter in renda form
@@ -1207,40 +1830,317 @@
   overlay.addEventListener('click', e => { if(e.target === overlay) closeModal(); });
   document.addEventListener('keydown', e => { if(e.key === 'Escape' && overlay.classList.contains('open')) closeModal(); });
 
-  // Adicionar gasto
+  // Criar categoria nova
   // addCard só é anexado ao grid dentro de loadFromSupabase() (após login),
   // então document.getElementById('addCustomCard') ainda retorna null aqui.
   // Usamos a referência já criada em memória (linha ~1100) em vez de reconsultar o DOM.
-  addCard.addEventListener('click', () => {
-    document.getElementById('customExpenseName').value = '';
-    document.getElementById('customExpenseValue').value = '';
-    openModal();
+  const tipoToggleEl = document.getElementById('customExpenseTipoToggle');
+  let selectedCustomTipo = null;
+  tipoToggleEl?.querySelectorAll('.tipo-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedCustomTipo = btn.dataset.tipo;
+      tipoToggleEl.classList.remove('invalid');
+      tipoToggleEl.querySelectorAll('.tipo-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+    });
   });
 
-  // Formulário de gasto customizado
-  attachCurrencyMask(document.getElementById('customExpenseValue'), () => {});
+  addCard.addEventListener('click', () => {
+    document.getElementById('customExpenseName').value = '';
+    document.getElementById('customExpenseVencimento').value = '';
+    selectedCustomTipo = null;
+    tipoToggleEl?.classList.remove('invalid');
+    tipoToggleEl?.querySelectorAll('.tipo-toggle-btn').forEach(b => b.classList.remove('active'));
+    openModal();
+  });
 
   document.getElementById('addExpenseForm')?.addEventListener('submit', e => {
     e.preventDefault();
     const name = document.getElementById('customExpenseName').value.trim();
     if(!name) return;
-    const raw = document.getElementById('customExpenseValue').value.replace(/\D/g, '');
-    const cents = raw ? parseInt(raw, 10) : 0;
+    if(!selectedCustomTipo){
+      tipoToggleEl?.classList.add('invalid');
+      return;
+    }
+    const rawVenc = document.getElementById('customExpenseVencimento').value.trim();
+    let vencimento = null;
+    if(rawVenc){
+      vencimento = parseInt(rawVenc, 10);
+      if(!(vencimento >= 1 && vencimento <= 31)) return;
+    }
     const id = 'custom_' + Date.now();
-    gastos[id] = cents / 100;
-    addCustomExpenseToDOM(id, name, cents);
-    dbInsertCategory(id, name, cents);
+    gastos[id] = 0;
+    if(vencimento) vencimentos[id] = vencimento;
+    renderExpenseCard({ id, name, type: selectedCustomTipo, icon: 'outro' });
+    dbInsertCategory(id, name, selectedCustomTipo, null, null, vencimento);
     recalc();
     closeModal();
   });
 
-  // ========== RENAME EXPENSE NAMES ==========
+  // ========== MODAL CONTROL (nova meta) ==========
+  const goalOverlayEl = document.getElementById('addGoalOverlay');
+
+  function openGoalModal(){
+    goalOverlayEl.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeGoalModal(){
+    goalOverlayEl.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('addGoalCloseBtn')?.addEventListener('click', closeGoalModal);
+  goalOverlayEl.addEventListener('click', e => { if(e.target === goalOverlayEl) closeGoalModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && goalOverlayEl.classList.contains('open')) closeGoalModal(); });
+
+  addGoalCard.addEventListener('click', () => {
+    document.getElementById('goalName').value = '';
+    document.getElementById('goalTarget').value = '';
+    openGoalModal();
+  });
+
+  attachCurrencyMask(document.getElementById('goalTarget'), () => {});
+
+  document.getElementById('addGoalForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('goalName').value.trim();
+    const raw = document.getElementById('goalTarget').value.replace(/\D/g, '');
+    const cents = raw ? parseInt(raw, 10) : 0;
+    const target = cents / 100;
+    if(!name || target <= 0) return;
+    const id = 'goal_' + Date.now();
+    gastos[id] = 0;
+    goalTargets[id] = target;
+    renderExpenseCard({ id, name, type: 'Meta', icon: 'meta' });
+    dbInsertCategory(id, name, 'Meta', target);
+    recalc();
+    closeGoalModal();
+  });
+
+  // ========== MODAL CONTROL (novo cartão) ==========
+  const cardOverlayEl = document.getElementById('addCardOverlay');
+
+  function openCardModal(){
+    cardOverlayEl.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeCardModal(){
+    cardOverlayEl.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('addCardCloseBtn')?.addEventListener('click', closeCardModal);
+  cardOverlayEl.addEventListener('click', e => { if(e.target === cardOverlayEl) closeCardModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && cardOverlayEl.classList.contains('open')) closeCardModal(); });
+
+  addCardTile.addEventListener('click', () => {
+    document.getElementById('cardName').value = '';
+    document.getElementById('cardLimite').value = '';
+    document.getElementById('cardFechamento').value = '';
+    document.getElementById('cardVencimento').value = '';
+    openCardModal();
+  });
+
+  attachCurrencyMask(document.getElementById('cardLimite'), () => {});
+
+  document.getElementById('addCardForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('cardName').value.trim();
+    const raw = document.getElementById('cardLimite').value.replace(/\D/g, '');
+    const limite = (raw ? parseInt(raw, 10) : 0) / 100;
+    const fechamento = parseInt(document.getElementById('cardFechamento').value, 10);
+    const vencimento = parseInt(document.getElementById('cardVencimento').value, 10);
+    if(!name || limite <= 0) return;
+    if(!(fechamento >= 1 && fechamento <= 31)) return;
+    if(!(vencimento >= 1 && vencimento <= 31)) return;
+    const id = 'card_' + Date.now();
+    gastos[id] = 0;
+    cardData[id] = { limite, fechamento };
+    vencimentos[id] = vencimento;
+    renderExpenseCard({ id, name, type: 'Cartao', icon: 'cartao' });
+    dbInsertCategory(id, name, 'Cartao', null, { limite, fechamento, vencimento });
+    recalc();
+    closeCardModal();
+  });
+
+  // ========== MODAL DE LANÇAMENTOS (por categoria) ==========
+  const entriesOverlayEl = document.getElementById('entriesOverlay');
+  let activeEntryCategoryId = null;
+
+  // historyOnly: true pros pontos de entrada que só consultam ("N lançamentos"
+  // no card, barra do gráfico de distribuição) — mesmo modal, mesma lógica,
+  // só esconde o formulário de adicionar (CSS #entriesOverlay.history-only).
+  function openEntriesModal(categoryId, { historyOnly = false } = {}){
+    activeEntryCategoryId = categoryId;
+    editingEntryId = null;
+    const card = document.querySelector(`.expense-card[data-id="${categoryId}"]`);
+    const name = card?.querySelector('[data-card-name]')?.textContent || '';
+    document.getElementById('entriesCategoryTitle').textContent = `Lançamentos — ${name}`;
+    document.getElementById('entryData').value = toDateStr(new Date());
+    document.getElementById('entryValor').value = '';
+    document.getElementById('entryDescricao').value = '';
+    document.getElementById('entryDescricao').placeholder = descricaoPlaceholderFor(categoryId);
+    entriesOverlayEl.classList.toggle('history-only', historyOnly);
+    document.getElementById('entriesModalSub').textContent = historyOnly
+      ? 'Todos os lançamentos desta categoria neste mês.'
+      : 'Cada lançamento é um item — pode adicionar quantos precisar nesta categoria.';
+    renderEntryHistory(categoryId);
+    entriesOverlayEl.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeEntriesModal(){
+    entriesOverlayEl.classList.remove('open');
+    document.body.style.overflow = '';
+    activeEntryCategoryId = null;
+    editingEntryId = null;
+  }
+
+  // Placeholder do campo Descrição — contextual ao tipo da categoria que
+  // está lançando (não faz sentido sugerir "Pano de prato" pra um cartão
+  // ou uma meta). Nunca deve aparecer como se fosse uma descrição real —
+  // displayDescricao() serve de defesa também contra linhas antigas no
+  // banco que por algum bug anterior tenham gravado um desses textos.
+  const DESCRICAO_PLACEHOLDERS = {
+    Fixo: 'Ex: Água, Luz, Aluguel…',
+    'Variável': 'Ex: Mercado, Compra online…',
+    Cartao: 'Ex: Geladeira parcelada, Compra online…',
+    Meta: 'Ex: Aporte mensal, Bônus guardado…',
+    Personalizado: 'Ex: Detalhe do gasto…'
+  };
+  const DESCRICAO_PLACEHOLDER_VALUES = new Set(Object.values(DESCRICAO_PLACEHOLDERS));
+  function descricaoPlaceholderFor(categoryId){
+    const card = document.querySelector(`.expense-card[data-id="${categoryId}"]`);
+    const tipo = card?.dataset.tipo;
+    return DESCRICAO_PLACEHOLDERS[tipo] || DESCRICAO_PLACEHOLDERS.Personalizado;
+  }
+  function displayDescricao(raw){
+    const d = (raw || '').trim();
+    return DESCRICAO_PLACEHOLDER_VALUES.has(d) ? '' : d;
+  }
+
+  let editingEntryId = null;
+
+  // Histórico do modal sempre mostra TODOS os lançamentos do mês da categoria,
+  // independente do filtro de período do dashboard — o filtro é uma lente de
+  // visualização dos totais, não deve esconder dados de quem está gerenciando.
+  function renderEntryHistory(categoryId){
+    const list = entriesForCategory(categoryId).slice().sort((a,b) => (b.data || '').localeCompare(a.data || ''));
+    const container = document.getElementById('entryHistory');
+    container.innerHTML = '';
+    if(list.length === 0){
+      container.innerHTML = '<div class="entry-history-empty">Nenhum lançamento neste mês ainda.</div>';
+      return;
+    }
+    list.forEach(entry => {
+      const row = document.createElement('div');
+      row.className = 'entry-row';
+      if(entry.id === editingEntryId){
+        buildEntryRowEditing(row, entry, categoryId);
+      } else {
+        buildEntryRowView(row, entry, categoryId);
+      }
+      container.appendChild(row);
+    });
+  }
+
+  function buildEntryRowView(row, entry, categoryId){
+    const desc = displayDescricao(entry.descricao);
+    row.innerHTML = `
+      <span class="entry-row-date">${formatDateShort(entry.data)}</span>
+      <span class="entry-row-desc">${desc || '(sem descrição)'}</span>
+      <span class="entry-row-val">${money(entry.valor)}</span>
+      <button class="entry-row-edit-btn" type="button" title="Editar">${pencilSVG}</button>
+      <button class="entry-row-del" type="button" title="Remover">${trashSVG}</button>
+    `;
+    row.querySelector('.entry-row-desc').title = desc;
+    row.querySelector('.entry-row-edit-btn').addEventListener('click', () => {
+      editingEntryId = entry.id;
+      renderEntryHistory(categoryId);
+    });
+    row.querySelector('.entry-row-del').addEventListener('click', () => deleteExpenseEntry(entry.id, categoryId));
+  }
+
+  function buildEntryRowEditing(row, entry, categoryId){
+    row.classList.add('editing');
+    row.innerHTML = `
+      <div class="entry-row-edit-fields">
+        <input class="entry-row-edit-date" type="date">
+        <div class="entry-row-edit-currency"><span>R$</span><input type="text" inputmode="numeric" placeholder="0,00" autocomplete="off"></div>
+        <input class="entry-row-edit-desc" type="text" maxlength="60" placeholder="${descricaoPlaceholderFor(categoryId)}" autocomplete="off">
+      </div>
+      <div class="entry-row-actions">
+        <button class="entry-row-save-btn" type="button" title="Salvar">${checkSVG}</button>
+        <button class="entry-row-cancel-btn" type="button" title="Cancelar">${closeSVG}</button>
+      </div>
+    `;
+    const dateInput  = row.querySelector('.entry-row-edit-date');
+    const valorInput = row.querySelector('.entry-row-edit-currency input');
+    const descInput  = row.querySelector('.entry-row-edit-desc');
+    dateInput.value  = entry.data || '';
+    valorInput.value = entry.valor ? formatFromCents(Math.round(entry.valor * 100)) : '';
+    descInput.value  = displayDescricao(entry.descricao);
+
+    let editedValor = entry.valor;
+    attachCurrencyMask(valorInput, (val) => { editedValor = val; });
+
+    function save(){
+      if(!(editedValor > 0)) return;
+      const novaData = dateInput.value || entry.data;
+      const novaDescricao = descInput.value.trim() || null;
+      editingEntryId = null;
+      updateExpenseEntry(entry.id, categoryId, editedValor, novaDescricao, novaData);
+    }
+    function cancel(){
+      editingEntryId = null;
+      renderEntryHistory(categoryId);
+    }
+    row.querySelector('.entry-row-save-btn').addEventListener('click', save);
+    row.querySelector('.entry-row-cancel-btn').addEventListener('click', cancel);
+  }
+
+  document.getElementById('entriesCloseBtn')?.addEventListener('click', closeEntriesModal);
+  entriesOverlayEl.addEventListener('click', e => { if(e.target === entriesOverlayEl) closeEntriesModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && entriesOverlayEl.classList.contains('open')) closeEntriesModal(); });
+
+  attachCurrencyMask(document.getElementById('entryValor'), () => {});
+
+  document.getElementById('addEntryForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    if(!activeEntryCategoryId) return;
+    const raw = document.getElementById('entryValor').value.replace(/\D/g, '');
+    const cents = raw ? parseInt(raw, 10) : 0;
+    const valor = cents / 100;
+    const descricao = document.getElementById('entryDescricao').value.trim() || null;
+    const data = document.getElementById('entryData').value || toDateStr(new Date());
+    if(valor <= 0) return;
+    addExpenseEntry(activeEntryCategoryId, valor, descricao, data);
+    document.getElementById('entryValor').value = '';
+    document.getElementById('entryDescricao').value = '';
+    document.getElementById('entryData').value = toDateStr(new Date());
+    renderEntryHistory(activeEntryCategoryId);
+  });
+
+  // ========== RENAME EXPENSE NAMES (+ CAMPOS DE CARTÃO / VENCIMENTO) ==========
+  // O mesmo botão de editar (lápis) e o mesmo gatilho (clique no nome) abrem
+  // um painel diferente conforme o tipo da categoria:
+  // - Cartão: nome + limite + fechamento + vencimento (todos obrigatórios).
+  // - Meta: mantém o rename simples de sempre (não tem vencimento — não é
+  //   uma "conta a pagar").
+  // - Demais (Fixo/Variável/Personalizado): nome + vencimento OPCIONAL.
+  // Painéis usam Salvar/Cancelar explícitos porque blur não dá conta de
+  // múltiplos campos ao mesmo tempo.
   function attachNameEdit(card, id){
     const nameEl   = card.querySelector('[data-card-name]');
     const editBtn  = card.querySelector('.name-edit-btn');
     if(!nameEl || !editBtn) return;
+    const isCard = card.classList.contains('is-card');
+    const isGoal = card.classList.contains('is-goal');
 
     function startEdit(){
+      if(isCard){ startCardEdit(); return; }
+      if(!isGoal){ startRegularEdit(); return; }
       const current = nameEl.textContent;
       const input = document.createElement('input');
       input.className = 'name-edit-input';
@@ -1266,6 +2166,135 @@
       input.addEventListener('keydown', e => {
         if(e.key === 'Enter'){ e.preventDefault(); input.blur(); }
         if(e.key === 'Escape'){ input.value = current; input.blur(); }
+      });
+    }
+
+    function startCardEdit(){
+      const nameWrap = card.querySelector('.expense-name-wrap');
+      if(nameWrap.dataset.editing === '1') return; // já tem painel aberto
+      nameWrap.dataset.editing = '1';
+      const info = cardData[id] || {};
+      const currentName = nameEl.textContent;
+
+      const panel = document.createElement('div');
+      panel.className = 'card-edit-panel';
+      panel.innerHTML = `
+        <div class="card-edit-field">
+          <label class="form-lbl">Nome</label>
+          <input class="form-ctrl" type="text" maxlength="40" data-card-edit-name>
+        </div>
+        <div class="entry-row-edit-fields">
+          <div class="card-edit-field">
+            <label class="form-lbl">Limite</label>
+            <div class="entry-row-edit-currency"><span>R$</span><input type="text" inputmode="numeric" placeholder="0,00" data-card-edit-limite></div>
+          </div>
+          <div class="card-edit-field">
+            <label class="form-lbl">Fechamento</label>
+            <input class="card-edit-day" type="number" min="1" max="31" placeholder="Ex: 20" data-card-edit-fechamento>
+          </div>
+          <div class="card-edit-field">
+            <label class="form-lbl">Vencimento</label>
+            <input class="card-edit-day" type="number" min="1" max="31" placeholder="Ex: 27" data-card-edit-vencimento>
+          </div>
+        </div>
+        <div class="entry-row-actions">
+          <button class="entry-row-save-btn" type="button" title="Salvar">${checkSVG}</button>
+          <button class="entry-row-cancel-btn" type="button" title="Cancelar">${closeSVG}</button>
+        </div>
+      `;
+      const nameInput     = panel.querySelector('[data-card-edit-name]');
+      const limiteInput   = panel.querySelector('[data-card-edit-limite]');
+      const fechInput     = panel.querySelector('[data-card-edit-fechamento]');
+      const vencInput     = panel.querySelector('[data-card-edit-vencimento]');
+      nameInput.value   = currentName;
+      limiteInput.value = info.limite ? formatFromCents(Math.round(info.limite * 100)) : '';
+      fechInput.value   = info.fechamento || '';
+      vencInput.value   = vencimentos[id] || '';
+
+      let editedLimite = info.limite || 0;
+      attachCurrencyMask(limiteInput, (val) => { editedLimite = val; });
+
+      nameWrap.style.display = 'none';
+      nameWrap.insertAdjacentElement('afterend', panel);
+      nameInput.focus();
+      nameInput.select();
+
+      function cleanup(){
+        panel.remove();
+        nameWrap.style.display = '';
+        delete nameWrap.dataset.editing;
+      }
+      panel.querySelector('.entry-row-cancel-btn').addEventListener('click', e => { e.stopPropagation(); cleanup(); });
+      panel.querySelector('.entry-row-save-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        const newName = nameInput.value.trim() || currentName;
+        const newFechamento = parseInt(fechInput.value, 10);
+        const newVencimento = parseInt(vencInput.value, 10);
+        if(!(editedLimite > 0)) return;
+        if(!(newFechamento >= 1 && newFechamento <= 31)) return;
+        if(!(newVencimento >= 1 && newVencimento <= 31)) return;
+        nameEl.textContent = newName;
+        cardData[id] = { limite: editedLimite, fechamento: newFechamento };
+        vencimentos[id] = newVencimento;
+        cleanup();
+        dbUpdateCardCategory(id, newName, editedLimite, newFechamento, newVencimento);
+        recalc();
+      });
+    }
+
+    function startRegularEdit(){
+      const nameWrap = card.querySelector('.expense-name-wrap');
+      if(nameWrap.dataset.editing === '1') return; // já tem painel aberto
+      nameWrap.dataset.editing = '1';
+      const currentName = nameEl.textContent;
+      const currentVencimento = vencimentos[id] || '';
+
+      const panel = document.createElement('div');
+      panel.className = 'card-edit-panel';
+      panel.innerHTML = `
+        <div class="card-edit-field">
+          <label class="form-lbl">Nome</label>
+          <input class="form-ctrl" type="text" maxlength="40" data-reg-edit-name>
+        </div>
+        <div class="card-edit-field">
+          <label class="form-lbl">Vencimento (opcional)</label>
+          <input class="card-edit-day" type="number" min="1" max="31" placeholder="Ex: 10" data-reg-edit-vencimento>
+        </div>
+        <div class="entry-row-actions">
+          <button class="entry-row-save-btn" type="button" title="Salvar">${checkSVG}</button>
+          <button class="entry-row-cancel-btn" type="button" title="Cancelar">${closeSVG}</button>
+        </div>
+      `;
+      const nameInput = panel.querySelector('[data-reg-edit-name]');
+      const vencInput = panel.querySelector('[data-reg-edit-vencimento]');
+      nameInput.value = currentName;
+      vencInput.value = currentVencimento;
+
+      nameWrap.style.display = 'none';
+      nameWrap.insertAdjacentElement('afterend', panel);
+      nameInput.focus();
+      nameInput.select();
+
+      function cleanup(){
+        panel.remove();
+        nameWrap.style.display = '';
+        delete nameWrap.dataset.editing;
+      }
+      panel.querySelector('.entry-row-cancel-btn').addEventListener('click', e => { e.stopPropagation(); cleanup(); });
+      panel.querySelector('.entry-row-save-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        const newName = nameInput.value.trim() || currentName;
+        const rawVenc = vencInput.value.trim();
+        let newVencimento = null;
+        if(rawVenc){
+          newVencimento = parseInt(rawVenc, 10);
+          if(!(newVencimento >= 1 && newVencimento <= 31)) return;
+        }
+        nameEl.textContent = newName;
+        if(newVencimento) vencimentos[id] = newVencimento; else delete vencimentos[id];
+        cleanup();
+        dbUpdateCategoryVencimento(id, newName, newVencimento);
+        recalc();
       });
     }
 
@@ -1310,7 +2339,7 @@
       const val = gastos[id] || 0;
       if(val <= 0) return;
       const name = card.querySelector('[data-card-name]')?.textContent || id;
-      rows.push({ name, val, color: CHART_COLORS[idx % CHART_COLORS.length] });
+      rows.push({ id, name, val, color: CHART_COLORS[idx % CHART_COLORS.length] });
     });
 
     // Remove old bar rows (keep .chart-empty)
@@ -1323,15 +2352,17 @@
     if(empty) empty.style.display = 'none';
 
     const total = totalGastos > 0 ? totalGastos : 1;
-    rows.forEach(({ name, val, color }) => {
+    rows.forEach(({ id, name, val, color }) => {
       const pct = (val / total) * 100;
       const row = document.createElement('div');
       row.className = 'chart-bar-row';
+      row.title = 'Ver lançamentos';
       row.innerHTML = `
         <div class="chart-bar-name" title="${name}">${name}</div>
         <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div></div>
         <div class="chart-bar-pct">${pct.toFixed(0)}%</div>
         <div class="chart-bar-val">${money(val)}</div>`;
+      row.addEventListener('click', () => openEntriesModal(id, { historyOnly: true }));
       area.appendChild(row);
     });
   }
@@ -1424,6 +2455,7 @@
         authScreenEl.style.display = 'flex';
         dataLoaded = false;
         loginFormEl.reset();
+        setAuthMode('login');
       }
     });
   } else {

@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Histórico — Kadosh Finance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/png" href="img/faviconKadosh.png">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --navy: #193065;
+    --navy-deep: #0e1c40;
+    --blue: #218cc9;
+    --blue-light: #4fb3e8;
+    --bg: #f4f7fb;
+    --panel: #ffffff;
+    --border: #e3e9f2;
+    --text: #14213d;
+    --text-soft: #6b7688;
+    --pos: #1a9c6b;
+    --neg: #d6432f;
+    --warn: #c98a12;
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+    --shadow: 0 1px 2px rgba(20,33,61,0.04), 0 12px 32px -12px rgba(20,33,61,0.12);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    font-family:'Manrope', sans-serif;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(33,140,201,0.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(25,48,101,0.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    padding:48px 24px 80px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1180px; margin:0 auto; }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:40px; }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand img{ width:44px; height:44px; border-radius:12px; }
+  .brand-text .eyebrow{ font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:var(--text-soft); font-weight:700; }
+  .brand-text h1{ font-family:'Bebas Neue', sans-serif; font-size:26px; letter-spacing:0.02em; color:var(--navy); line-height:1; margin-top:2px; }
+  .brand-text h1 span{ color:var(--blue); }
+  .btn-back{
+    background:#fff; border:1px solid var(--border);
+    color:var(--navy); padding:9px 16px; border-radius:100px;
+    font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;
+    text-decoration:none; display:inline-block;
+    transition:background .2s, color .2s, border-color .2s;
+  }
+  .btn-back:hover{ border-color:var(--blue); color:var(--blue); background:rgba(33,140,201,0.04); }
+
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+  .section-head h2{ font-family:'Bebas Neue', sans-serif; font-size:22px; letter-spacing:0.02em; color:var(--navy); }
+  .section-head .count{ font-size:12.5px; color:var(--text-soft); font-weight:600; }
+
+  .card{
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:var(--radius-lg); box-shadow:var(--shadow);
+    padding:24px 28px;
+  }
+
+  .month-picker-card{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    padding:16px 20px; margin-bottom:28px;
+  }
+  .month-nav-btn{
+    width:36px; height:36px; border-radius:50%; border:1.5px solid var(--border);
+    background:#fbfcfe; color:var(--navy); font-size:16px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:border-color .2s, background .2s, opacity .2s;
+    flex-shrink:0;
+  }
+  .month-nav-btn:hover:not(:disabled){ border-color:var(--blue); background:rgba(33,140,201,0.06); }
+  .month-nav-btn:disabled{ opacity:.35; cursor:default; }
+  .month-select{
+    border:1.5px solid var(--border); border-radius:var(--radius-sm);
+    padding:10px 16px; font-family:'Manrope',sans-serif; font-size:14.5px;
+    font-weight:700; color:var(--navy); background:#fbfcfe; outline:none;
+    min-width:200px; text-align:center; cursor:pointer;
+  }
+  .month-select:focus{ border-color:var(--blue); }
+
+  .hist-empty{
+    text-align:center; padding:48px 24px; color:var(--text-soft);
+    font-size:14px; line-height:1.6;
+  }
+  .hist-empty a{ color:var(--blue); font-weight:700; }
+
+  .compare-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:32px; }
+  @media (max-width:700px){ .compare-grid{ grid-template-columns:1fr; } }
+  .compare-card{ position:relative; }
+  .compare-label{ font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-soft); font-weight:700; margin-bottom:10px; }
+  .compare-value{ font-family:'Bebas Neue', sans-serif; font-size:38px; letter-spacing:0.01em; color:var(--navy); line-height:1; }
+  .compare-sub{ margin-top:12px; font-size:12.5px; color:var(--text-soft); }
+  .compare-sub b{ color:var(--text); font-weight:700; }
+  .compare-delta{ margin-top:10px; font-size:13px; font-weight:800; }
+
+  .delta-up{ color:var(--neg); }
+  .delta-down{ color:var(--pos); }
+  .delta-flat{ color:var(--text-soft); }
+
+  .cat-compare-list{ display:flex; flex-direction:column; gap:2px; padding:12px 28px; }
+  .cat-compare-head, .cat-compare-row{
+    display:flex; align-items:center; gap:14px; padding:12px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .cat-compare-row:last-child{ border-bottom:none; }
+  .cat-compare-head{ font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-soft); font-weight:800; }
+  .cat-compare-name{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:var(--text); }
+  .cat-compare-name span.cat-name-text{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .recorrente-badge{
+    flex-shrink:0; font-size:10px; font-weight:800; letter-spacing:0.02em;
+    padding:2px 8px; border-radius:100px;
+    background:rgba(26,156,107,0.1); color:var(--pos);
+  }
+  .cat-compare-values{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .cat-compare-val{ width:96px; text-align:right; font-size:13px; font-weight:700; color:var(--text); }
+  .cat-compare-arrow{ width:52px; text-align:center; font-size:12.5px; font-weight:800; }
+  .hist-empty-inline{ padding:20px 0; text-align:center; color:var(--text-soft); font-size:13px; }
+
+  .footnote{ text-align:center; margin-top:44px; font-size:12px; color:var(--text-soft); }
+  .footnote a{ color:var(--navy); font-weight:700; text-decoration:none; }
+  .footnote a:hover{ text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="histRoot" style="display:none">
+
+  <div class="topbar">
+    <div class="brand">
+      <img src="img/logoKadosh.png" alt="Kadosh">
+      <div class="brand-text">
+        <div class="eyebrow">Kadosh Tech</div>
+        <h1>KADOSH <span>FINANCE</span></h1>
+      </div>
+    </div>
+    <a class="btn-back" href="index.html">← Dashboard</a>
+  </div>
+
+  <div class="section-head">
+    <h2>Histórico</h2>
+    <span class="count">Compare seus gastos entre meses diferentes</span>
+  </div>
+
+  <div id="histLoading" class="card hist-empty">Carregando histórico…</div>
+
+  <div id="histEmptyState" class="card hist-empty" style="display:none">
+    Ainda não há lançamentos em nenhum mês anterior ao atual.<br>
+    Volte aqui quando tiver pelo menos dois meses de uso pra comparar.
+  </div>
+
+  <div id="histContent" style="display:none">
+    <div class="card month-picker-card">
+      <button class="month-nav-btn" id="prevMonthBtn" type="button" title="Mês anterior">‹</button>
+      <select class="month-select" id="monthSelect"></select>
+      <button class="month-nav-btn" id="nextMonthBtn" type="button" title="Próximo mês">›</button>
+    </div>
+
+    <div class="compare-grid">
+      <div class="card compare-card">
+        <div class="compare-label" id="curMonthLabel">Mês Atual</div>
+        <div class="compare-value" id="curMonthTotal">R$ 0,00</div>
+        <div class="compare-sub">Saldo inicial: <b id="curMonthSaldo">R$ 0,00</b></div>
+      </div>
+      <div class="card compare-card">
+        <div class="compare-label" id="selMonthLabel">—</div>
+        <div class="compare-value" id="selMonthTotal">R$ 0,00</div>
+        <div class="compare-sub">Saldo inicial: <b id="selMonthSaldo">R$ 0,00</b></div>
+        <div class="compare-delta" id="totalDelta"></div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <h2>Por Categoria</h2>
+      <span class="count">Mês atual vs. mês selecionado</span>
+    </div>
+    <div class="card cat-compare-list" id="catCompareList">
+      <div class="cat-compare-head">
+        <div class="cat-compare-name">Categoria</div>
+        <div class="cat-compare-values">
+          <span class="cat-compare-val">Atual</span>
+          <span class="cat-compare-arrow"></span>
+          <span class="cat-compare-val">Selecionado</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">Desenvolvido por <a href="https://kadosh-tech.vercel.app/" target="_blank" rel="noopener noreferrer">Kadosh Tech</a></div>
+
+</div>
+
+<div id="histAuthGate" class="wrap" style="display:none">
+  <div class="card hist-empty" style="max-width:420px; margin:80px auto;">
+    Você precisa estar logado pra ver o histórico.<br>
+    <a href="index.html">Voltar e entrar</a>
+  </div>
+</div>
+
+<script>
+  // ========== SUPABASE — mesmo projeto/sessão do dashboard principal.
+  // O client persiste a sessão no localStorage por padrão, então login
+  // feito no index.html já é enxergado aqui, sem pedir de novo. ==========
+  const SUPABASE_URL      = 'https://jfzcmofigewimasmhvfs.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_QmECvthsZi6MKr1HG6-vig_F3XqE3sk';
+  let sb = null;
+  try{
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }catch(e){
+    console.error('Falha ao iniciar o cliente Supabase:', e);
+  }
+
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  function mesReferenciaAtual(){
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  }
+  const MES_REF_ATUAL = mesReferenciaAtual();
+
+  // "YYYY-MM-01" -> "Agosto / 2026" — igual ao monthTag do dashboard.
+  function mesLabel(mesRef){
+    const [y, m] = mesRef.split('-');
+    return `${meses[parseInt(m, 10) - 1]} / ${y}`;
+  }
+
+  function money(v){
+    const sign = v < 0 ? '-' : '';
+    return sign + 'R$ ' + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+
+  let currentUser = null;
+  let categoriesById = {};      // category_key -> linha de `categories` (nome, tipo, deleted…)
+  let expensesByMonth = {};     // mes_referencia -> { categoria_id: totalValor }
+  let saldoByMonth = {};        // mes_referencia -> saldo_inicial
+  let availableMonths = [];     // meses passados com lançamento, mais recente primeiro
+  let selectedMonthIndex = 0;
+
+  async function loadData(){
+    const [catsRes, expRes, balRes] = await Promise.all([
+      sb.from('categories').select('*').eq('user_id', currentUser.id),
+      sb.from('expenses').select('*').eq('user_id', currentUser.id),
+      sb.from('monthly_balances').select('*').eq('user_id', currentUser.id)
+    ]);
+    if(catsRes.error) console.error('Erro ao carregar categorias:', catsRes.error);
+    if(expRes.error)  console.error('Erro ao carregar lançamentos:', expRes.error);
+    if(balRes.error)  console.error('Erro ao carregar saldos:', balRes.error);
+
+    categoriesById = {};
+    (catsRes.data || []).forEach(c => { categoriesById[c.category_key] = c; });
+
+    expensesByMonth = {};
+    (expRes.data || []).forEach(row => {
+      const mr = row.mes_referencia;
+      if(!mr) return;
+      if(!expensesByMonth[mr]) expensesByMonth[mr] = {};
+      expensesByMonth[mr][row.categoria_id] = (expensesByMonth[mr][row.categoria_id] || 0) + (Number(row.valor) || 0);
+    });
+
+    saldoByMonth = {};
+    (balRes.data || []).forEach(b => { saldoByMonth[b.mes_referencia] = Number(b.saldo_inicial) || 0; });
+
+    // Só meses com lançamento de verdade viram opção — meses vazios não
+    // aparecem, mesmo que por acaso tenham um saldo inicial configurado.
+    availableMonths = Object.keys(expensesByMonth)
+      .filter(mr => mr !== MES_REF_ATUAL)
+      .sort((a, b) => b.localeCompare(a));
+  }
+
+  function monthTotal(mesRef){
+    const cats = expensesByMonth[mesRef] || {};
+    return Object.values(cats).reduce((a, b) => a + b, 0);
+  }
+
+  // Um mês é exatamente um mês-calendário depois do outro (comparação por
+  // string "YYYY-MM" convertida em índice absoluto de mês, sem usar
+  // new Date() pra evitar qualquer risco de fuso).
+  function isConsecutiveMonth(mesRefAnterior, mesRefSeguinte){
+    const [ay, am] = mesRefAnterior.split('-').map(Number);
+    const [by, bm] = mesRefSeguinte.split('-').map(Number);
+    return (by * 12 + bm) - (ay * 12 + am) === 1;
+  }
+
+  // Recorrência: categoria com gasto > 0 em pelo menos 2 meses consecutivos
+  // em toda a história de lançamentos do usuário — comparação simples de
+  // presença, sem estatística.
+  function computeRecurrentCategories(){
+    const monthsByCategory = {};
+    Object.keys(expensesByMonth).forEach(mr => {
+      Object.entries(expensesByMonth[mr]).forEach(([catId, total]) => {
+        if(total > 0) (monthsByCategory[catId] = monthsByCategory[catId] || []).push(mr);
+      });
+    });
+    const recurrent = new Set();
+    Object.entries(monthsByCategory).forEach(([catId, months]) => {
+      const sorted = months.slice().sort();
+      for(let i = 1; i < sorted.length; i++){
+        if(isConsecutiveMonth(sorted[i - 1], sorted[i])){ recurrent.add(catId); break; }
+      }
+    });
+    return recurrent;
+  }
+
+  function categoryName(catId){
+    return categoriesById[catId]?.nome || catId;
+  }
+
+  function renderMonthSelect(){
+    const sel = document.getElementById('monthSelect');
+    sel.innerHTML = '';
+    availableMonths.forEach(mr => {
+      const opt = document.createElement('option');
+      opt.value = mr;
+      opt.textContent = mesLabel(mr);
+      sel.appendChild(opt);
+    });
+    sel.value = availableMonths[selectedMonthIndex];
+    document.getElementById('prevMonthBtn').disabled = selectedMonthIndex >= availableMonths.length - 1;
+    document.getElementById('nextMonthBtn').disabled = selectedMonthIndex <= 0;
+  }
+
+  // curVal = mês atual, refVal = mês selecionado (base da comparação).
+  // Pra gasto, subir é ruim (vermelho) e cair é bom (verde) — o oposto da
+  // convenção de "verde sobe" que faz sentido pra investimento.
+  function applyDelta(el, curVal, refVal, compact){
+    el.classList.remove('delta-up', 'delta-down', 'delta-flat');
+    if(refVal === 0 && curVal === 0){ el.textContent = ''; el.title = ''; return; }
+    const diff = curVal - refVal;
+    const flat = diff === 0;
+    const up = diff > 0;
+    el.classList.add(flat ? 'delta-flat' : up ? 'delta-up' : 'delta-down');
+    const pct = refVal > 0 ? Math.abs((diff / refVal) * 100) : 100;
+    const arrow = flat ? '→' : up ? '↑' : '↓';
+    el.textContent = compact ? arrow : (flat ? 'Igual ao mês selecionado' : `${arrow} ${pct.toFixed(0)}% vs. mês selecionado`);
+    el.title = flat ? 'Gasto igual ao mês selecionado' : `${up ? 'Gastou mais' : 'Gastou menos'} que o mês selecionado (${pct.toFixed(0)}%)`;
+  }
+
+  function renderComparison(){
+    const selMes = availableMonths[selectedMonthIndex];
+    const curTotal = monthTotal(MES_REF_ATUAL);
+    const selTotal = monthTotal(selMes);
+
+    document.getElementById('curMonthLabel').textContent = `${mesLabel(MES_REF_ATUAL)} (atual)`;
+    document.getElementById('selMonthLabel').textContent = mesLabel(selMes);
+    document.getElementById('curMonthTotal').textContent = money(curTotal);
+    document.getElementById('selMonthTotal').textContent = money(selTotal);
+    document.getElementById('curMonthSaldo').textContent = money(saldoByMonth[MES_REF_ATUAL] || 0);
+    document.getElementById('selMonthSaldo').textContent = money(saldoByMonth[selMes] || 0);
+    applyDelta(document.getElementById('totalDelta'), curTotal, selTotal, false);
+
+    const recurrent = computeRecurrentCategories();
+    const catIds = new Set([
+      ...Object.keys(expensesByMonth[MES_REF_ATUAL] || {}),
+      ...Object.keys(expensesByMonth[selMes] || {})
+    ]);
+    const rows = [...catIds].map(id => {
+      const curVal = (expensesByMonth[MES_REF_ATUAL] || {})[id] || 0;
+      const selVal = (expensesByMonth[selMes] || {})[id] || 0;
+      return { id, nome: categoryName(id), curVal, selVal, recorrente: recurrent.has(id) };
+    }).sort((a, b) => Math.max(b.curVal, b.selVal) - Math.max(a.curVal, a.selVal));
+
+    const listEl = document.getElementById('catCompareList');
+    listEl.querySelectorAll('.cat-compare-row').forEach(r => r.remove());
+    if(rows.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'hist-empty-inline';
+      empty.textContent = 'Nenhuma categoria com gasto em nenhum dos dois meses.';
+      listEl.appendChild(empty);
+      return;
+    }
+    rows.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'cat-compare-row';
+      row.innerHTML = `
+        <div class="cat-compare-name">
+          <span class="cat-name-text">${r.nome}</span>
+          ${r.recorrente ? '<span class="recorrente-badge">Recorrente</span>' : ''}
+        </div>
+        <div class="cat-compare-values">
+          <span class="cat-compare-val">${money(r.curVal)}</span>
+          <span class="cat-compare-arrow"></span>
+          <span class="cat-compare-val">${money(r.selVal)}</span>
+        </div>
+      `;
+      applyDelta(row.querySelector('.cat-compare-arrow'), r.curVal, r.selVal, true);
+      listEl.appendChild(row);
+    });
+  }
+
+  document.getElementById('monthSelect').addEventListener('change', e => {
+    selectedMonthIndex = availableMonths.indexOf(e.target.value);
+    renderMonthSelect();
+    renderComparison();
+  });
+  document.getElementById('prevMonthBtn').addEventListener('click', () => {
+    if(selectedMonthIndex < availableMonths.length - 1){
+      selectedMonthIndex++;
+      renderMonthSelect();
+      renderComparison();
+    }
+  });
+  document.getElementById('nextMonthBtn').addEventListener('click', () => {
+    if(selectedMonthIndex > 0){
+      selectedMonthIndex--;
+      renderMonthSelect();
+      renderComparison();
+    }
+  });
+
+  async function init(){
+    if(!sb){
+      document.getElementById('histLoading').textContent = 'Não foi possível conectar ao servidor. Verifique sua internet e recarregue a página.';
+      return;
+    }
+    const { data: { session } } = await sb.auth.getSession();
+    if(!session){
+      document.getElementById('histAuthGate').style.display = 'block';
+      return;
+    }
+    currentUser = session.user;
+    document.getElementById('histRoot').style.display = '';
+
+    await loadData();
+
+    document.getElementById('histLoading').style.display = 'none';
+    if(availableMonths.length === 0){
+      document.getElementById('histEmptyState').style.display = 'block';
+      return;
+    }
+    selectedMonthIndex = 0; // mês passado mais recente
+    document.getElementById('histContent').style.display = 'block';
+    renderMonthSelect();
+    renderComparison();
+  }
+
+  init();
+</script>
+</body>
+</html>

@@ -437,7 +437,14 @@
   /* — Lançamentos (histórico por categoria) — */
   .entry-form-row{ display:flex; gap:12px; }
   #entriesOverlay.history-only #addEntryForm{ display:none; }
-  .entry-form-row .form-row{ flex:1; }
+  /* min-width:0 é o fix real: sem isso, um flex item respeita o tamanho
+     mínimo do próprio conteúdo (o input de data não encolhe sozinho) e
+     ignora o flex:1 — em telas estreitas isso empurra o campo de valor
+     por cima, em vez dos dois dividirem a largura igualmente. */
+  .entry-form-row .form-row{ flex:1; min-width:0; }
+  @media (max-width: 480px){
+    .entry-form-row{ flex-direction:column; gap:16px; }
+  }
   .entry-history{
     margin-top:20px; max-height:240px; overflow-y:auto;
     display:flex; flex-direction:column; gap:8px;
@@ -917,6 +924,17 @@
         <div class="form-row">
           <label class="form-lbl" for="customExpenseVencimento">Dia de vencimento (opcional)</label>
           <input class="form-ctrl" id="customExpenseVencimento" type="number" inputmode="numeric" min="1" max="31" placeholder="Ex: 10">
+        </div>
+        <div class="form-row">
+          <label class="form-lbl" for="customExpenseDescricao">Descrição</label>
+          <input class="form-ctrl" id="customExpenseDescricao" type="text" placeholder="Ex: Detalhe do gasto…" maxlength="60" autocomplete="off">
+        </div>
+        <div class="form-row">
+          <label class="form-lbl" for="customExpenseValor">Valor</label>
+          <div class="form-currency-row">
+            <span>R$</span>
+            <input id="customExpenseValor" type="text" inputmode="numeric" placeholder="0,00" autocomplete="off">
+          </div>
         </div>
         <button type="submit" class="btn-add-expense">+ Criar Categoria</button>
       </form>
@@ -1848,9 +1866,13 @@
     });
   });
 
+  attachCurrencyMask(document.getElementById('customExpenseValor'), () => {});
+
   addCard.addEventListener('click', () => {
     document.getElementById('customExpenseName').value = '';
     document.getElementById('customExpenseVencimento').value = '';
+    document.getElementById('customExpenseDescricao').value = '';
+    document.getElementById('customExpenseValor').value = '';
     selectedCustomTipo = null;
     tipoToggleEl?.classList.remove('invalid');
     tipoToggleEl?.querySelectorAll('.tipo-toggle-btn').forEach(b => b.classList.remove('active'));
@@ -1871,11 +1893,17 @@
       vencimento = parseInt(rawVenc, 10);
       if(!(vencimento >= 1 && vencimento <= 31)) return;
     }
+    // primeiro lançamento é opcional — só cria se o valor foi preenchido,
+    // pra não obrigar quem só quer criar a categoria vazia mesmo
+    const rawValor = document.getElementById('customExpenseValor').value.replace(/\D/g, '');
+    const primeiroValor = rawValor ? parseInt(rawValor, 10) / 100 : 0;
+    const primeiraDescricao = document.getElementById('customExpenseDescricao').value.trim() || null;
     const id = 'custom_' + Date.now();
     gastos[id] = 0;
     if(vencimento) vencimentos[id] = vencimento;
     renderExpenseCard({ id, name, type: selectedCustomTipo, icon: 'outro' });
     dbInsertCategory(id, name, selectedCustomTipo, null, null, vencimento);
+    if(primeiroValor > 0) addExpenseEntry(id, primeiroValor, primeiraDescricao, toDateStr(new Date()));
     recalc();
     closeModal();
   });

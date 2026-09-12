@@ -27,6 +27,7 @@
     --radius-md: 18px;
     --radius-sm: 12px;
     --shadow: 0 1px 2px rgba(20,33,61,0.04), 0 12px 32px -12px rgba(20,33,61,0.12);
+    --shadow-lift: 0 20px 50px -20px rgba(25,48,101,0.35);
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
   body{
@@ -57,7 +58,8 @@
   }
   .btn-back:hover{ border-color:var(--blue); color:var(--blue); background:rgba(33,140,201,0.04); }
 
-  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:36px 2px 16px; flex-wrap:wrap; }
+  .section-head:first-of-type{ margin-top:0; }
   .section-head h2{ font-family:'Bebas Neue', sans-serif; font-size:22px; letter-spacing:0.02em; color:var(--navy); }
   .section-head .count{ font-size:12.5px; color:var(--text-soft); font-weight:600; }
 
@@ -69,7 +71,7 @@
 
   .month-picker-card{
     display:flex; align-items:center; justify-content:center; gap:14px;
-    padding:16px 20px; margin-bottom:28px;
+    padding:16px 20px; margin-bottom:8px;
   }
   .month-nav-btn{
     width:36px; height:36px; border-radius:50%; border:1.5px solid var(--border);
@@ -93,38 +95,164 @@
     font-size:14px; line-height:1.6;
   }
   .hist-empty a{ color:var(--blue); font-weight:700; }
+  .hist-empty-inline{ padding:20px 0; text-align:center; color:var(--text-soft); font-size:13px; }
 
-  .compare-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:32px; }
-  @media (max-width:700px){ .compare-grid{ grid-template-columns:1fr; } }
-  .compare-card{ position:relative; }
-  .compare-label{ font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-soft); font-weight:700; margin-bottom:10px; }
-  .compare-value{ font-family:'Bebas Neue', sans-serif; font-size:38px; letter-spacing:0.01em; color:var(--navy); line-height:1; }
-  .compare-sub{ margin-top:12px; font-size:12.5px; color:var(--text-soft); }
-  .compare-sub b{ color:var(--text); font-weight:700; }
-  .compare-delta{ margin-top:10px; font-size:13px; font-weight:800; }
-
-  .delta-up{ color:var(--neg); }
-  .delta-down{ color:var(--pos); }
-  .delta-flat{ color:var(--text-soft); }
-
-  .cat-compare-list{ display:flex; flex-direction:column; gap:2px; padding:12px 28px; }
-  .cat-compare-head, .cat-compare-row{
-    display:flex; align-items:center; gap:14px; padding:12px 0;
-    border-bottom:1px solid var(--border);
-  }
-  .cat-compare-row:last-child{ border-bottom:none; }
-  .cat-compare-head{ font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-soft); font-weight:800; }
-  .cat-compare-name{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:var(--text); }
-  .cat-compare-name span.cat-name-text{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .recorrente-badge{
     flex-shrink:0; font-size:10px; font-weight:800; letter-spacing:0.02em;
     padding:2px 8px; border-radius:100px;
     background:rgba(26,156,107,0.1); color:var(--pos);
   }
-  .cat-compare-values{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
-  .cat-compare-val{ width:96px; text-align:right; font-size:13px; font-weight:700; color:var(--text); }
-  .cat-compare-arrow{ width:52px; text-align:center; font-size:12.5px; font-weight:800; }
-  .hist-empty-inline{ padding:20px 0; text-align:center; color:var(--text-soft); font-size:13px; }
+
+  /* ---------- 1. CARDS DE RESUMO DO MÊS SELECIONADO ---------- */
+  .summary-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:8px; }
+  @media (max-width:760px){ .summary-grid{ grid-template-columns:1fr; } }
+  .summary-card{ padding:22px 26px; border-left-width:4px; border-left-style:solid; border-left-color:var(--border); }
+  .summary-card.summary-in{ border-left-color:var(--pos); }
+  .summary-card.summary-out{ border-left-color:var(--neg); }
+  .summary-card.summary-balance{ border-left-color:var(--navy); }
+  .summary-label{ font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-soft); font-weight:700; margin-bottom:12px; }
+  .summary-value{ font-family:'Bebas Neue', sans-serif; font-size:34px; letter-spacing:0.01em; color:var(--text); line-height:1; transition:color .2s; }
+  .summary-value.value-pos{ color:var(--pos); }
+  .summary-value.value-neg{ color:var(--neg); }
+  .summary-sub{ margin-top:10px; font-size:12px; color:var(--text-soft); }
+
+  /* ---------- 2. MINI-GRÁFICO DE EVOLUÇÃO MENSAL ---------- */
+  .trend-card{ padding:30px 28px 22px; }
+  /* Rolagem horizontal PRÓPRIA do gráfico em telas estreitas (6 colunas não
+     cabem em ~390px) — a página em si nunca deve rolar na horizontal por
+     causa dele. flex-shrink:0 nas colunas garante que elas rolem em vez de
+     espremer/estourar o container. */
+  .trend-bars{ display:flex; align-items:flex-end; gap:16px; height:130px; overflow-x:auto; overflow-y:visible; }
+  .trend-bar-col{
+    flex:0 0 64px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    gap:9px; height:100%; cursor:pointer; position:relative; border-radius:8px; padding-top:26px;
+  }
+  .trend-bar-track{ flex:1; width:100%; display:flex; align-items:flex-end; justify-content:center; }
+  .trend-bar{
+    width:100%; max-width:46px; min-height:5px; border-radius:8px 8px 3px 3px;
+    background:linear-gradient(180deg, var(--blue-light), var(--blue));
+    transition:background .2s, filter .15s;
+  }
+  .trend-bar-col:hover .trend-bar{ filter:brightness(1.08); }
+  .trend-bar-col.is-peak .trend-bar{ background:linear-gradient(180deg, var(--navy), var(--navy-deep)); }
+  .trend-bar-col.is-selected .trend-bar{ box-shadow:0 0 0 2px var(--blue-light); }
+  .trend-peak-badge{
+    position:absolute; top:0; left:50%; transform:translateX(-50%);
+    font-size:9px; font-weight:800; letter-spacing:0.02em; white-space:nowrap;
+    color:#fff; background:var(--navy); padding:3px 8px; border-radius:100px;
+  }
+  .trend-bar-label{ font-size:11px; font-weight:700; color:var(--text-soft); white-space:nowrap; }
+  .trend-bar-col.is-selected .trend-bar-label{ color:var(--navy); }
+  .trend-bar-val{ font-size:10px; font-weight:700; color:var(--text-soft); white-space:nowrap; }
+
+  /* ---------- 3. COMPARATIVO SIMPLIFICADO ---------- */
+  /* Grid (não flex) pra poder redefinir só o layout no breakpoint mobile
+     sem duplicar os elementos — mesma técnica usada no gráfico de
+     Distribuição de Gastos do dashboard principal. */
+  .compare-simple-card{ padding:6px 28px; }
+  .compare-simple-head, .compare-simple-row{
+    display:grid;
+    grid-template-columns: minmax(0,1fr) 110px 70px 110px;
+    grid-template-areas: "label cur delta sel";
+    align-items:center; gap:14px;
+  }
+  .compare-simple-head{
+    padding:12px 0; border-bottom:1px solid var(--border);
+    font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-soft); font-weight:800;
+  }
+  .compare-simple-row{ padding:16px 0; border-bottom:1px solid var(--border); }
+  .compare-simple-row:last-child{ border-bottom:none; }
+  .compare-simple-label{ grid-area:label; min-width:0; font-size:13.5px; font-weight:700; color:var(--text); }
+  .compare-simple-head .compare-simple-label{ visibility:hidden; }
+  .compare-simple-val{ font-size:13.5px; font-weight:700; color:var(--text); text-align:right; }
+  .compare-simple-val-cur{ grid-area:cur; }
+  .compare-simple-val-sel{ grid-area:sel; }
+  .compare-simple-delta{
+    grid-area:delta; text-align:center; font-size:12.5px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; gap:4px;
+  }
+  .delta-good{ color:var(--pos); }
+  .delta-bad{ color:var(--neg); }
+  .delta-flat{ color:var(--text-soft); }
+
+  /* Mobile: label ganha a linha inteira, cur/delta/sel reorganizam numa
+     segunda linha de 3 colunas — os valores fixos de 110px+70px+110px do
+     desktop não cabem em ~390px. */
+  @media (max-width: 480px){
+    .compare-simple-card{ padding:6px 18px; }
+    .compare-simple-head{ display:none; }
+    .compare-simple-row{
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      grid-template-areas: "label label label" "cur delta sel";
+      row-gap:8px; column-gap:8px;
+    }
+    .compare-simple-val{ font-size:12.5px; text-align:left; }
+    .compare-simple-val-sel{ text-align:right; }
+    .compare-simple-delta{ font-size:11.5px; }
+  }
+
+  /* ---------- 4. DETALHAMENTO POR CATEGORIA ---------- */
+  .cat-detail-list{ display:flex; flex-direction:column; padding:6px 28px; }
+  .cat-detail-row{
+    padding:14px 0; border-bottom:1px solid var(--border);
+    cursor:pointer; transition:opacity .15s;
+  }
+  .cat-detail-row:last-child{ border-bottom:none; }
+  .cat-detail-row:hover{ opacity:.75; }
+  .cat-detail-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:9px; }
+  .cat-detail-name{ display:flex; align-items:center; gap:8px; min-width:0; font-size:13.5px; font-weight:700; color:var(--text); }
+  .cat-detail-name .cat-name-text{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cat-detail-val{ flex-shrink:0; font-size:13.5px; font-weight:800; color:var(--text); }
+  .cat-detail-bar-row{ display:flex; align-items:center; gap:10px; }
+  .cat-detail-bar-track{ flex:1; height:8px; background:#eef1f6; border-radius:100px; overflow:hidden; }
+  .cat-detail-bar-fill{ height:100%; border-radius:100px; background:linear-gradient(90deg, var(--navy), var(--blue)); }
+  .cat-detail-pct{ width:38px; flex-shrink:0; text-align:right; font-size:12px; font-weight:700; color:var(--text-soft); }
+
+  /* ---------- MODAL DE LANÇAMENTOS (somente leitura, reaproveita o
+     mesmo visual/CSS do modal do dashboard principal) ---------- */
+  .premium-overlay{
+    position:fixed; inset:0; z-index:9999;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(10,22,50,0.58);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    opacity:0; pointer-events:none;
+    transition:opacity .3s ease;
+    padding:20px;
+  }
+  .premium-overlay.open{ opacity:1; pointer-events:all; }
+  .premium-modal{
+    background:#fff;
+    border-radius:var(--radius-lg);
+    box-shadow:0 32px 80px -20px rgba(10,22,50,0.55), 0 0 0 1px rgba(25,48,101,0.07);
+    max-width:480px; width:100%;
+    padding:36px 36px 30px;
+    position:relative;
+    transform:translateY(22px) scale(0.96);
+    transition:transform .38s cubic-bezier(.34,1.4,.64,1);
+    max-height:80vh; overflow-y:auto;
+  }
+  .premium-overlay.open .premium-modal{ transform:translateY(0) scale(1); }
+  .modal-close-btn{
+    position:absolute; top:18px; right:18px;
+    width:34px; height:34px; border-radius:50%;
+    border:1.5px solid var(--border); background:#f4f7fb;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    color:var(--text-soft); font-size:20px; line-height:1; padding:0; font-family:inherit;
+    transition:background .2s, border-color .2s, color .2s;
+  }
+  .modal-close-btn:hover{ background:#e9eef6; border-color:#b0bdd0; color:var(--text); }
+  .add-form-title{ font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:0.02em; color:var(--navy); margin-bottom:6px; }
+  .add-form-sub{ font-size:13.5px; color:var(--text-soft); margin-bottom:0; line-height:1.5; }
+  .entry-history{ margin-top:20px; display:flex; flex-direction:column; gap:8px; }
+  .entry-history-empty{ font-size:13px; color:var(--text-soft); text-align:center; padding:16px 0; }
+  .entry-row{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm);
+    background:#fbfcfe;
+  }
+  .entry-row-date{ font-size:11.5px; font-weight:800; color:var(--text-soft); flex-shrink:0; width:34px; }
+  .entry-row-desc{ flex:1; min-width:0; font-size:13px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .entry-row-val{ font-size:13px; font-weight:800; color:var(--text); flex-shrink:0; }
 
   .footnote{ text-align:center; margin-top:44px; font-size:12px; color:var(--text-soft); }
   .footnote a{ color:var(--navy); font-weight:700; text-decoration:none; }
@@ -165,34 +293,53 @@
       <button class="month-nav-btn" id="nextMonthBtn" type="button" title="Próximo mês">›</button>
     </div>
 
-    <div class="compare-grid">
-      <div class="card compare-card">
-        <div class="compare-label" id="curMonthLabel">Mês Atual</div>
-        <div class="compare-value" id="curMonthTotal">R$ 0,00</div>
-        <div class="compare-sub">Saldo inicial: <b id="curMonthSaldo">R$ 0,00</b></div>
+    <div class="section-head">
+      <h2>Resumo do Mês</h2>
+      <span class="count" id="summaryMonthLabel">—</span>
+    </div>
+    <div class="summary-grid">
+      <div class="card summary-card summary-in">
+        <div class="summary-label">Entradas</div>
+        <div class="summary-value" id="sumEntradas">R$ 0,00</div>
       </div>
-      <div class="card compare-card">
-        <div class="compare-label" id="selMonthLabel">—</div>
-        <div class="compare-value" id="selMonthTotal">R$ 0,00</div>
-        <div class="compare-sub">Saldo inicial: <b id="selMonthSaldo">R$ 0,00</b></div>
-        <div class="compare-delta" id="totalDelta"></div>
+      <div class="card summary-card summary-out">
+        <div class="summary-label">Gastos</div>
+        <div class="summary-value" id="sumGastos">R$ 0,00</div>
+      </div>
+      <div class="card summary-card summary-balance">
+        <div class="summary-label">Saldo do Mês</div>
+        <div class="summary-value" id="sumSaldo">R$ 0,00</div>
+        <div class="summary-sub" id="sumSaldoInicial">Saldo inicial: R$ 0,00</div>
       </div>
     </div>
 
     <div class="section-head">
-      <h2>Por Categoria</h2>
+      <h2>Evolução Mensal</h2>
+      <span class="count">Total de gastos nos últimos meses com lançamento</span>
+    </div>
+    <div class="card trend-card">
+      <div class="trend-bars" id="trendBars"></div>
+    </div>
+
+    <div class="section-head">
+      <h2>Comparativo</h2>
       <span class="count">Mês atual vs. mês selecionado</span>
     </div>
-    <div class="card cat-compare-list" id="catCompareList">
-      <div class="cat-compare-head">
-        <div class="cat-compare-name">Categoria</div>
-        <div class="cat-compare-values">
-          <span class="cat-compare-val">Atual</span>
-          <span class="cat-compare-arrow"></span>
-          <span class="cat-compare-val">Selecionado</span>
-        </div>
+    <div class="card compare-simple-card" id="compareSimpleCard">
+      <div class="compare-simple-head">
+        <div class="compare-simple-label">Métrica</div>
+        <div class="compare-simple-val compare-simple-val-cur" id="compareHeadCur">Atual</div>
+        <div class="compare-simple-delta"></div>
+        <div class="compare-simple-val compare-simple-val-sel" id="compareHeadSel">Selecionado</div>
       </div>
+      <div id="compareSimpleRows"></div>
     </div>
+
+    <div class="section-head">
+      <h2>Por Categoria</h2>
+      <span class="count" id="catDetailCount">Mês selecionado</span>
+    </div>
+    <div class="card cat-detail-list" id="catDetailList"></div>
   </div>
 
   <div class="footnote">Desenvolvido por <a href="https://kadosh-tech.vercel.app/" target="_blank" rel="noopener noreferrer">Kadosh Tech</a></div>
@@ -203,6 +350,19 @@
   <div class="card hist-empty" style="max-width:420px; margin:80px auto;">
     Você precisa estar logado pra ver o histórico.<br>
     <a href="index.html">Voltar e entrar</a>
+  </div>
+</div>
+
+<!-- Modal de lançamentos por categoria+mês — somente leitura (mês passado,
+     sem edição). Mesmo vocabulário visual do modal "Lançamentos" do
+     dashboard principal (premium-overlay/entry-row), só sem os controles de
+     adicionar/editar/excluir, que não fazem sentido pra um mês fechado. -->
+<div class="premium-overlay" id="entriesOverlay" role="dialog" aria-modal="true">
+  <div class="premium-modal">
+    <button class="modal-close-btn" id="entriesCloseBtn" aria-label="Fechar">&#215;</button>
+    <div class="add-form-title" id="entriesCategoryTitle">Lançamentos</div>
+    <p class="add-form-sub" id="entriesModalSub">Lançamentos desta categoria no mês selecionado.</p>
+    <div class="entry-history" id="entryHistory"></div>
   </div>
 </div>
 
@@ -220,6 +380,7 @@
   }
 
   const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const mesesAbrev = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
   function mesReferenciaAtual(){
     const now = new Date();
@@ -232,6 +393,11 @@
     const [y, m] = mesRef.split('-');
     return `${meses[parseInt(m, 10) - 1]} / ${y}`;
   }
+  // "YYYY-MM-01" -> "Ago/26" — versão compacta pro mini-gráfico.
+  function mesLabelShort(mesRef){
+    const [y, m] = mesRef.split('-');
+    return `${mesesAbrev[parseInt(m, 10) - 1]}/${y.slice(2)}`;
+  }
 
   function money(v){
     const sign = v < 0 ? '-' : '';
@@ -239,35 +405,52 @@
   }
 
   let currentUser = null;
-  let categoriesById = {};      // category_key -> linha de `categories` (nome, tipo, deleted…)
-  let expensesByMonth = {};     // mes_referencia -> { categoria_id: totalValor }
-  let saldoByMonth = {};        // mes_referencia -> saldo_inicial
-  let availableMonths = [];     // meses passados com lançamento, mais recente primeiro
+  let categoriesById = {};        // category_key -> linha de `categories` (nome, tipo, deleted…)
+  let expensesByMonth = {};       // mes_referencia -> { categoria_id: totalValor }
+  let entriesByMonthCategory = {};// mes_referencia -> { categoria_id: [{data,valor,descricao}] } — pros lançamentos individuais (modal)
+  let saldoByMonth = {};          // mes_referencia -> saldo_inicial
+  let incomeByMonth = {};         // mes_referencia -> total de rendas extras
+  let availableMonths = [];       // meses passados com lançamento, mais recente primeiro
   let selectedMonthIndex = 0;
 
+  // Lógica de carregamento/agrupamento de dados é a mesma de antes (mesmas
+  // 3 fontes + rendas extras) — essa refatoração é só de apresentação.
   async function loadData(){
-    const [catsRes, expRes, balRes] = await Promise.all([
+    const [catsRes, expRes, balRes, incRes] = await Promise.all([
       sb.from('categories').select('*').eq('user_id', currentUser.id),
       sb.from('expenses').select('*').eq('user_id', currentUser.id),
-      sb.from('monthly_balances').select('*').eq('user_id', currentUser.id)
+      sb.from('monthly_balances').select('*').eq('user_id', currentUser.id),
+      sb.from('extra_incomes').select('*').eq('user_id', currentUser.id)
     ]);
     if(catsRes.error) console.error('Erro ao carregar categorias:', catsRes.error);
     if(expRes.error)  console.error('Erro ao carregar lançamentos:', expRes.error);
     if(balRes.error)  console.error('Erro ao carregar saldos:', balRes.error);
+    if(incRes.error)  console.error('Erro ao carregar rendas extras:', incRes.error);
 
     categoriesById = {};
     (catsRes.data || []).forEach(c => { categoriesById[c.category_key] = c; });
 
     expensesByMonth = {};
+    entriesByMonthCategory = {};
     (expRes.data || []).forEach(row => {
       const mr = row.mes_referencia;
       if(!mr) return;
       if(!expensesByMonth[mr]) expensesByMonth[mr] = {};
       expensesByMonth[mr][row.categoria_id] = (expensesByMonth[mr][row.categoria_id] || 0) + (Number(row.valor) || 0);
+      if(!entriesByMonthCategory[mr]) entriesByMonthCategory[mr] = {};
+      if(!entriesByMonthCategory[mr][row.categoria_id]) entriesByMonthCategory[mr][row.categoria_id] = [];
+      entriesByMonthCategory[mr][row.categoria_id].push({ data: row.data, valor: Number(row.valor) || 0, descricao: row.descricao });
     });
 
     saldoByMonth = {};
     (balRes.data || []).forEach(b => { saldoByMonth[b.mes_referencia] = Number(b.saldo_inicial) || 0; });
+
+    incomeByMonth = {};
+    (incRes.data || []).forEach(r => {
+      const mr = r.mes_referencia;
+      if(!mr) return;
+      incomeByMonth[mr] = (incomeByMonth[mr] || 0) + (Number(r.valor) || 0);
+    });
 
     // Só meses com lançamento de verdade viram opção — meses vazios não
     // aparecem, mesmo que por acaso tenham um saldo inicial configurado.
@@ -279,6 +462,19 @@
   function monthTotal(mesRef){
     const cats = expensesByMonth[mesRef] || {};
     return Object.values(cats).reduce((a, b) => a + b, 0);
+  }
+
+  // "Entradas" do mês = rendas extras (mesmo conceito de "Rendas extras" do
+  // dashboard principal). Saldo inicial/salário não entra aqui — ele é a
+  // base já disponível, mostrada à parte como subtítulo no card de Saldo.
+  function monthEntradas(mesRef){
+    return incomeByMonth[mesRef] || 0;
+  }
+
+  // Saldo do mês = mesma fórmula do "Saldo Restante" do dashboard principal:
+  // saldo inicial + rendas extras − gastos.
+  function monthSaldo(mesRef){
+    return (saldoByMonth[mesRef] || 0) + monthEntradas(mesRef) - monthTotal(mesRef);
   }
 
   // Um mês é exatamente um mês-calendário depois do outro (comparação por
@@ -328,92 +524,213 @@
     document.getElementById('nextMonthBtn').disabled = selectedMonthIndex <= 0;
   }
 
-  // curVal = mês atual, refVal = mês selecionado (base da comparação).
-  // Pra gasto, subir é ruim (vermelho) e cair é bom (verde) — o oposto da
-  // convenção de "verde sobe" que faz sentido pra investimento.
-  function applyDelta(el, curVal, refVal, compact){
-    el.classList.remove('delta-up', 'delta-down', 'delta-flat');
-    if(refVal === 0 && curVal === 0){ el.textContent = ''; el.title = ''; return; }
-    const diff = curVal - refVal;
-    const flat = diff === 0;
-    const up = diff > 0;
-    el.classList.add(flat ? 'delta-flat' : up ? 'delta-up' : 'delta-down');
-    const pct = refVal > 0 ? Math.abs((diff / refVal) * 100) : 100;
-    const arrow = flat ? '→' : up ? '↑' : '↓';
-    el.textContent = compact ? arrow : (flat ? 'Igual ao mês selecionado' : `${arrow} ${pct.toFixed(0)}% vs. mês selecionado`);
-    el.title = flat ? 'Gasto igual ao mês selecionado' : `${up ? 'Gastou mais' : 'Gastou menos'} que o mês selecionado (${pct.toFixed(0)}%)`;
+  // Único ponto que troca o mês selecionado — usado pelo <select>, pelas
+  // setas e pelas barras do mini-gráfico (nenhum outro lugar duplica essa lógica).
+  function selectMonthByRef(mesRef){
+    const idx = availableMonths.indexOf(mesRef);
+    if(idx === -1) return;
+    selectedMonthIndex = idx;
+    renderMonthSelect();
+    renderAll();
   }
 
-  function renderComparison(){
-    const selMes = availableMonths[selectedMonthIndex];
-    const curTotal = monthTotal(MES_REF_ATUAL);
-    const selTotal = monthTotal(selMes);
+  // ---------- 1. CARDS DE RESUMO DO MÊS SELECIONADO ----------
+  function renderSummary(selMes){
+    document.getElementById('summaryMonthLabel').textContent = mesLabel(selMes);
+    const entradas = monthEntradas(selMes);
+    const gastos = monthTotal(selMes);
+    const saldo = monthSaldo(selMes);
+    document.getElementById('sumEntradas').textContent = money(entradas);
+    document.getElementById('sumGastos').textContent = money(gastos);
+    const saldoEl = document.getElementById('sumSaldo');
+    saldoEl.textContent = money(saldo);
+    saldoEl.classList.remove('value-pos', 'value-neg');
+    saldoEl.classList.add(saldo >= 0 ? 'value-pos' : 'value-neg');
+    document.getElementById('sumSaldoInicial').textContent = `Saldo inicial: ${money(saldoByMonth[selMes] || 0)}`;
+  }
 
-    document.getElementById('curMonthLabel').textContent = `${mesLabel(MES_REF_ATUAL)} (atual)`;
-    document.getElementById('selMonthLabel').textContent = mesLabel(selMes);
-    document.getElementById('curMonthTotal').textContent = money(curTotal);
-    document.getElementById('selMonthTotal').textContent = money(selTotal);
-    document.getElementById('curMonthSaldo').textContent = money(saldoByMonth[MES_REF_ATUAL] || 0);
-    document.getElementById('selMonthSaldo').textContent = money(saldoByMonth[selMes] || 0);
-    applyDelta(document.getElementById('totalDelta'), curTotal, selTotal, false);
+  // ---------- 2. MINI-GRÁFICO DE EVOLUÇÃO MENSAL ----------
+  // Últimos 5-6 meses com lançamento — mesma fonte de dado de availableMonths
+  // (não lista mês vazio). availableMonths já vem do mais recente pro mais
+  // antigo; aqui exibimos em ordem cronológica (mais antigo -> mais recente).
+  function renderTrend(selMes){
+    const area = document.getElementById('trendBars');
+    area.innerHTML = '';
+    const months = availableMonths.slice(0, 6).slice().reverse();
+    if(months.length === 0) return;
+    const totals = months.map(mr => monthTotal(mr));
+    const maxTotal = Math.max(...totals, 1);
+    const peakIdx = totals.indexOf(Math.max(...totals));
+    months.forEach((mr, i) => {
+      const total = totals[i];
+      const heightPct = Math.max(4, (total / maxTotal) * 100);
+      const col = document.createElement('div');
+      col.className = 'trend-bar-col' + (i === peakIdx ? ' is-peak' : '') + (mr === selMes ? ' is-selected' : '');
+      col.title = `${mesLabel(mr)}: ${money(total)}`;
+      col.innerHTML = `
+        ${i === peakIdx ? '<span class="trend-peak-badge">Pico do período</span>' : ''}
+        <span class="trend-bar-val">${money(total)}</span>
+        <div class="trend-bar-track"><div class="trend-bar" style="height:${heightPct}%"></div></div>
+        <span class="trend-bar-label">${mesLabelShort(mr)}</span>
+      `;
+      col.addEventListener('click', () => selectMonthByRef(mr));
+      area.appendChild(col);
+    });
+  }
 
+  // "Gasto até o dia X" — compara o mesmo ponto do calendário nos dois
+  // meses (em vez de mês atual parcial vs. mês selecionado inteiro, que
+  // sempre faz o mês passado parecer mais caro só por ter mais dias
+  // decorridos). O dia de corte é o dia de hoje; se o mês selecionado for
+  // mais curto que isso (ex: hoje dia 31, mês selecionado é fevereiro),
+  // usa o último dia daquele mês como limite.
+  function daysInMonth(mesRef){
+    const [y, m] = mesRef.split('-').map(Number);
+    return new Date(y, m, 0).getDate(); // dia 0 do mês seguinte = último dia deste mês
+  }
+  function cutoffDayForMonth(mesRef){
+    return Math.min(new Date().getDate(), daysInMonth(mesRef));
+  }
+  // Soma por dia (não "tudo que existe") pra manter a lógica simétrica entre
+  // o mês atual (que naturalmente só tem lançamento até hoje) e o mês
+  // selecionado (que precisa ser cortado explicitamente no mesmo dia).
+  function monthTotalUntilDay(mesRef, day){
+    const catsMap = entriesByMonthCategory[mesRef] || {};
+    let total = 0;
+    Object.values(catsMap).forEach(entries => {
+      entries.forEach(e => {
+        const dia = parseInt((e.data || '').split('-')[2], 10);
+        if(!isNaN(dia) && dia <= day) total += e.valor;
+      });
+    });
+    return total;
+  }
+
+  // ---------- 3. COMPARATIVO SIMPLIFICADO (4 linhas fixas, cor semântica) ----------
+  function renderCompareRow(label, curVal, refVal, higherIsBetter){
+    const diff = curVal - refVal;
+    const flat = diff === 0;
+    const curHigher = diff > 0;
+    const pct = refVal !== 0 ? Math.abs((diff / refVal) * 100) : (curVal !== 0 ? 100 : 0);
+    const arrow = flat ? '→' : curHigher ? '↑' : '↓';
+    const cls = flat ? 'delta-flat' : (curHigher === higherIsBetter ? 'delta-good' : 'delta-bad');
+    return `
+      <div class="compare-simple-row">
+        <div class="compare-simple-label">${label}</div>
+        <div class="compare-simple-val compare-simple-val-cur">${money(curVal)}</div>
+        <div class="compare-simple-delta ${cls}">${flat ? '—' : `${arrow} ${pct.toFixed(0)}%`}</div>
+        <div class="compare-simple-val compare-simple-val-sel">${money(refVal)}</div>
+      </div>
+    `;
+  }
+
+  function renderCompareSimple(selMes){
+    const curEntradas = monthEntradas(MES_REF_ATUAL), selEntradas = monthEntradas(selMes);
+    const curGastos   = monthTotal(MES_REF_ATUAL),    selGastos   = monthTotal(selMes);
+    const curSaldo    = monthSaldo(MES_REF_ATUAL),    selSaldo    = monthSaldo(selMes);
+    const hoje = new Date().getDate();
+    const curGastoAteDia = monthTotalUntilDay(MES_REF_ATUAL, cutoffDayForMonth(MES_REF_ATUAL));
+    const selGastoAteDia = monthTotalUntilDay(selMes, cutoffDayForMonth(selMes));
+    document.getElementById('compareHeadCur').textContent = 'Atual';
+    document.getElementById('compareHeadSel').textContent = mesLabel(selMes);
+    document.getElementById('compareSimpleRows').innerHTML =
+      renderCompareRow('Entradas', curEntradas, selEntradas, true) +
+      renderCompareRow('Gastos', curGastos, selGastos, false) +
+      renderCompareRow('Saldo do Mês', curSaldo, selSaldo, true) +
+      renderCompareRow(`Gasto até o dia ${hoje}`, curGastoAteDia, selGastoAteDia, false);
+  }
+
+  // ---------- 4. DETALHAMENTO POR CATEGORIA (lista única do mês selecionado) ----------
+  function renderCategoryDetail(selMes){
+    document.getElementById('catDetailCount').textContent = mesLabel(selMes);
     const recurrent = computeRecurrentCategories();
-    const catIds = new Set([
-      ...Object.keys(expensesByMonth[MES_REF_ATUAL] || {}),
-      ...Object.keys(expensesByMonth[selMes] || {})
-    ]);
-    const rows = [...catIds].map(id => {
-      const curVal = (expensesByMonth[MES_REF_ATUAL] || {})[id] || 0;
-      const selVal = (expensesByMonth[selMes] || {})[id] || 0;
-      return { id, nome: categoryName(id), curVal, selVal, recorrente: recurrent.has(id) };
-    }).sort((a, b) => Math.max(b.curVal, b.selVal) - Math.max(a.curVal, a.selVal));
+    const cats = expensesByMonth[selMes] || {};
+    const total = monthTotal(selMes) || 1;
+    const rows = Object.entries(cats)
+      .filter(([, val]) => val > 0)
+      .map(([id, val]) => ({ id, nome: categoryName(id), val, pct: (val / total) * 100, recorrente: recurrent.has(id) }))
+      .sort((a, b) => b.val - a.val);
 
-    const listEl = document.getElementById('catCompareList');
-    listEl.querySelectorAll('.cat-compare-row').forEach(r => r.remove());
+    const listEl = document.getElementById('catDetailList');
+    listEl.innerHTML = '';
     if(rows.length === 0){
-      const empty = document.createElement('div');
-      empty.className = 'hist-empty-inline';
-      empty.textContent = 'Nenhuma categoria com gasto em nenhum dos dois meses.';
-      listEl.appendChild(empty);
+      listEl.innerHTML = '<div class="hist-empty-inline">Nenhuma categoria com gasto neste mês.</div>';
       return;
     }
     rows.forEach(r => {
       const row = document.createElement('div');
-      row.className = 'cat-compare-row';
+      row.className = 'cat-detail-row';
       row.innerHTML = `
-        <div class="cat-compare-name">
-          <span class="cat-name-text">${r.nome}</span>
-          ${r.recorrente ? '<span class="recorrente-badge">Recorrente</span>' : ''}
+        <div class="cat-detail-top">
+          <div class="cat-detail-name">
+            <span class="cat-name-text">${r.nome}</span>
+            ${r.recorrente ? '<span class="recorrente-badge">Recorrente</span>' : ''}
+          </div>
+          <div class="cat-detail-val">${money(r.val)}</div>
         </div>
-        <div class="cat-compare-values">
-          <span class="cat-compare-val">${money(r.curVal)}</span>
-          <span class="cat-compare-arrow"></span>
-          <span class="cat-compare-val">${money(r.selVal)}</span>
+        <div class="cat-detail-bar-row">
+          <div class="cat-detail-bar-track"><div class="cat-detail-bar-fill" style="width:${r.pct.toFixed(1)}%"></div></div>
+          <div class="cat-detail-pct">${r.pct.toFixed(0)}%</div>
         </div>
       `;
-      applyDelta(row.querySelector('.cat-compare-arrow'), r.curVal, r.selVal, true);
+      row.addEventListener('click', () => openEntriesModal(r.id, r.nome, selMes));
       listEl.appendChild(row);
     });
   }
 
+  // ---------- MODAL DE LANÇAMENTOS (somente leitura) ----------
+  const entriesOverlayEl = document.getElementById('entriesOverlay');
+
+  function openEntriesModal(categoryId, categoryName, mesRef){
+    document.getElementById('entriesCategoryTitle').textContent = `Lançamentos — ${categoryName}`;
+    document.getElementById('entriesModalSub').textContent = `${mesLabel(mesRef)} — somente leitura (mês fechado).`;
+    const list = (entriesByMonthCategory[mesRef]?.[categoryId] || []).slice().sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+    const container = document.getElementById('entryHistory');
+    container.innerHTML = '';
+    if(list.length === 0){
+      container.innerHTML = '<div class="entry-history-empty">Nenhum lançamento nesta categoria neste mês.</div>';
+    } else {
+      list.forEach(entry => {
+        const row = document.createElement('div');
+        row.className = 'entry-row';
+        const [, m, d] = (entry.data || '').split('-');
+        row.innerHTML = `
+          <span class="entry-row-date">${d && m ? `${d}/${m}` : '—'}</span>
+          <span class="entry-row-desc" title="${entry.descricao || ''}">${entry.descricao || '(sem descrição)'}</span>
+          <span class="entry-row-val">${money(entry.valor)}</span>
+        `;
+        container.appendChild(row);
+      });
+    }
+    entriesOverlayEl.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeEntriesModal(){
+    entriesOverlayEl.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('entriesCloseBtn')?.addEventListener('click', closeEntriesModal);
+  entriesOverlayEl.addEventListener('click', e => { if(e.target === entriesOverlayEl) closeEntriesModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && entriesOverlayEl.classList.contains('open')) closeEntriesModal(); });
+
+  // ---------- ORQUESTRAÇÃO ----------
+  function renderAll(){
+    const selMes = availableMonths[selectedMonthIndex];
+    renderSummary(selMes);
+    renderTrend(selMes);
+    renderCompareSimple(selMes);
+    renderCategoryDetail(selMes);
+  }
+
   document.getElementById('monthSelect').addEventListener('change', e => {
-    selectedMonthIndex = availableMonths.indexOf(e.target.value);
-    renderMonthSelect();
-    renderComparison();
+    selectMonthByRef(e.target.value);
   });
   document.getElementById('prevMonthBtn').addEventListener('click', () => {
-    if(selectedMonthIndex < availableMonths.length - 1){
-      selectedMonthIndex++;
-      renderMonthSelect();
-      renderComparison();
-    }
+    if(selectedMonthIndex < availableMonths.length - 1) selectMonthByRef(availableMonths[selectedMonthIndex + 1]);
   });
   document.getElementById('nextMonthBtn').addEventListener('click', () => {
-    if(selectedMonthIndex > 0){
-      selectedMonthIndex--;
-      renderMonthSelect();
-      renderComparison();
-    }
+    if(selectedMonthIndex > 0) selectMonthByRef(availableMonths[selectedMonthIndex - 1]);
   });
 
   async function init(){
@@ -439,7 +756,7 @@
     selectedMonthIndex = 0; // mês passado mais recente
     document.getElementById('histContent').style.display = 'block';
     renderMonthSelect();
-    renderComparison();
+    renderAll();
   }
 
   init();

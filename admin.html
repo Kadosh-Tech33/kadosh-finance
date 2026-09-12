@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Kadosh Finance — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" type="image/png" href="img/faviconKadosh.png">
+<!-- Sem integrity (SRI) de propósito: o Google documenta que a resposta desse
+     endpoint varia por User-Agent do navegador, então um hash fixo quebraria
+     o carregamento da fonte em parte dos navegadores. Não "corrigir" isso de
+     novo num scan futuro. -->
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4" integrity="sha384-yiVMs0R/Jyz7OhoXa/DsEMUSBLjEhr/QJta2ONO+zB6I8/GmNg/7AUFrZmAJV7KV" crossorigin="anonymous"></script>
+<style>
+  :root{
+    --navy: #193065;
+    --navy-deep: #0e1c40;
+    --blue: #218cc9;
+    --blue-light: #4fb3e8;
+    --bg: #f4f7fb;
+    --panel: #ffffff;
+    --border: #e3e9f2;
+    --text: #14213d;
+    --text-soft: #6b7688;
+    --pos: #1a9c6b;
+    --neg: #d6432f;
+    --warn: #c98a12;
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+    --shadow: 0 1px 2px rgba(20,33,61,0.04), 0 12px 32px -12px rgba(20,33,61,0.12);
+    --shadow-lift: 0 20px 50px -20px rgba(25,48,101,0.35);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    font-family:'Manrope', sans-serif;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(33,140,201,0.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(25,48,101,0.06), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    padding:48px 24px 80px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{ max-width:1000px; margin:0 auto; }
+
+  /* ---------- AUTH SCREEN (reaproveitado do index.html) ---------- */
+  .auth-wrap{
+    position:fixed; inset:0; z-index:10001;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(33,140,201,0.08), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(25,48,101,0.06), transparent 55%),
+      var(--bg);
+    padding:20px;
+  }
+  .auth-card{
+    background: linear-gradient(150deg, var(--navy) 0%, var(--navy-deep) 65%, #0a1633 100%);
+    border-radius:var(--radius-lg);
+    box-shadow: var(--shadow-lift);
+    max-width:420px; width:100%;
+    padding:40px 36px;
+    position:relative; overflow:hidden;
+  }
+  .auth-card::before{
+    content:""; position:absolute; top:-60px; right:-60px;
+    width:260px; height:260px; border-radius:50%;
+    background: radial-gradient(circle, rgba(79,179,232,0.35), transparent 70%);
+  }
+  .auth-brand{ position:relative; z-index:1; text-align:center; margin-bottom:28px; }
+  .auth-brand img{ width:52px; height:52px; border-radius:14px; margin-bottom:14px; }
+  .auth-brand h1{
+    font-family:'Bebas Neue', sans-serif; font-size:28px; letter-spacing:0.02em;
+    color:#fff; line-height:1;
+  }
+  .auth-brand h1 span{ color:var(--blue-light); }
+  .auth-brand p{ font-size:13px; color:rgba(255,255,255,0.6); margin-top:8px; }
+  .auth-tabs{ position:relative; z-index:1; display:flex; gap:8px; margin-bottom:20px; }
+  .auth-tab-btn{
+    flex:1; padding:10px; border:none; border-radius:var(--radius-sm);
+    background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.55);
+    font-family:'Manrope',sans-serif; font-weight:700; font-size:13px;
+    cursor:pointer; transition:background .2s, color .2s;
+  }
+  .auth-tab-btn.active{ background:linear-gradient(135deg,var(--blue),var(--blue-light)); color:#fff; }
+  .auth-form{ position:relative; z-index:1; display:flex; flex-direction:column; gap:12px; }
+  .auth-form .field-confirm{ display:none; }
+  .auth-form.mode-signup .field-confirm{ display:block; }
+  .auth-form label{
+    font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-weight:700;
+    color:rgba(255,255,255,0.55);
+  }
+  .auth-form input{
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);
+    border-radius:var(--radius-sm); padding:13px 15px;
+    color:#fff; font-family:'Manrope',sans-serif; font-size:15px; font-weight:600;
+    outline:none; width:100%; transition:border-color .2s, background .2s;
+  }
+  .auth-form input::placeholder{ color:rgba(255,255,255,0.35); }
+  .auth-form input:focus{ border-color:var(--blue-light); background:rgba(255,255,255,0.15); }
+  .btn-auth-submit{
+    margin-top:6px; padding:14px; border:none; border-radius:var(--radius-sm);
+    background:linear-gradient(135deg,var(--blue),var(--blue-light)); color:#fff;
+    font-family:'Manrope',sans-serif; font-weight:800; font-size:14.5px;
+    cursor:pointer; transition:opacity .2s, transform .15s;
+  }
+  .btn-auth-submit:hover{ opacity:.9; transform:translateY(-1px); }
+  .btn-auth-submit:disabled{ opacity:.6; cursor:default; transform:none; }
+  .auth-msg{
+    position:relative; z-index:1; margin-top:16px; font-size:13px; text-align:center;
+    min-height:18px; line-height:1.5;
+  }
+  .auth-msg.error{ color:#ff9d90; }
+  .auth-msg.success{ color:#7ee0b0; }
+
+  /* ---------- ADMIN ---------- */
+  .admin-topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:32px;
+  }
+  .brand{ display:flex; align-items:center; gap:14px; }
+  .brand img{ width:40px; height:40px; border-radius:11px; }
+  .brand-text .eyebrow{
+    font-size:10px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--text-soft); font-weight:700;
+  }
+  .brand-text h1{
+    font-family:'Bebas Neue', sans-serif; font-size:22px; letter-spacing:0.02em;
+    color:var(--navy); line-height:1; margin-top:2px;
+  }
+  .brand-text h1 span{ color:var(--blue); }
+  .brand-text .admin-tag{
+    font-size:10px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--blue); font-weight:800; margin-top:2px;
+  }
+  .btn-logout{
+    background:#fff; border:1px solid var(--border);
+    color:var(--text-soft); padding:9px 16px; border-radius:100px;
+    font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;
+    transition:background .2s, color .2s, border-color .2s;
+  }
+  .btn-logout:hover{ border-color:var(--neg); color:var(--neg); background:rgba(214,67,47,0.04); }
+
+  .admin-summary-bar{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    flex-wrap:wrap; margin-bottom:20px;
+  }
+  .admin-user-count{ font-size:13px; font-weight:800; color:var(--navy); white-space:nowrap; }
+  .admin-search-input{
+    flex:1; max-width:320px; min-width:200px;
+    background:#fff; border:1.5px solid var(--border); border-radius:var(--radius-sm);
+    padding:10px 15px; font-family:'Manrope',sans-serif; font-size:13.5px; font-weight:600;
+    color:var(--text); outline:none; transition:border-color .2s, box-shadow .2s;
+  }
+  .admin-search-input::placeholder{ color:#aab3c2; font-weight:600; }
+  .admin-search-input:focus{ border-color:var(--blue); box-shadow:0 0 0 4px rgba(33,140,201,0.10); }
+
+  .admin-empty{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg);
+    box-shadow:var(--shadow); padding:60px 24px; text-align:center;
+    color:var(--text-soft); font-size:14px;
+  }
+
+  .admin-report{ display:flex; flex-direction:column; gap:16px; }
+  .admin-user-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-md);
+    box-shadow:var(--shadow); padding:22px 26px;
+  }
+  .admin-user-header{
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+    flex-wrap:wrap; margin-bottom:4px;
+  }
+  .admin-user-email{ font-size:15px; font-weight:800; color:var(--navy); }
+  .admin-user-total{ font-size:15px; font-weight:800; color:var(--text); }
+  .admin-user-sub{ font-size:12.5px; color:var(--text-soft); font-weight:600; margin-bottom:14px; }
+  .admin-cat-table{ width:100%; border-collapse:collapse; }
+  .admin-cat-table td{
+    padding:8px 0; font-size:13px; border-top:1px solid var(--border);
+  }
+  .admin-cat-table td:first-child{ color:var(--text); font-weight:600; }
+  .admin-cat-table td:last-child{ color:var(--text-soft); font-weight:700; text-align:right; }
+  .admin-user-nodata{ font-size:12.5px; color:var(--text-soft); font-style:italic; padding-top:4px; }
+</style>
+</head>
+<body>
+
+<!-- ========== AUTH SCREEN (mesma tela do app principal) ========== -->
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <img src="img/logoKadosh.png" alt="Kadosh">
+      <h1>KADOSH <span>FINANCE</span></h1>
+      <p>Entre com seu e-mail e senha.</p>
+    </div>
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab-btn active" id="authTabLogin" data-mode="login">Entrar</button>
+      <button type="button" class="auth-tab-btn" id="authTabSignup" data-mode="signup">Criar Conta</button>
+    </div>
+    <form class="auth-form" id="loginForm">
+      <label for="loginEmail">E-mail</label>
+      <input type="email" id="loginEmail" placeholder="voce@email.com" autocomplete="email" required>
+      <label for="loginPassword">Senha</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+      <label for="loginPasswordConfirm" class="field-confirm">Confirmar senha</label>
+      <input type="password" id="loginPasswordConfirm" class="field-confirm" placeholder="••••••••" autocomplete="new-password">
+      <button type="submit" class="btn-auth-submit" id="loginSubmitBtn">Entrar</button>
+    </form>
+    <p class="auth-msg" id="authMsg"></p>
+  </div>
+</div>
+
+<!-- ========== ADMIN ========== -->
+<div id="adminRoot" style="display:none">
+  <div class="wrap">
+    <div class="admin-topbar">
+      <div class="brand">
+        <img src="img/logoKadosh.png" alt="Kadosh">
+        <div class="brand-text">
+          <div class="eyebrow">Kadosh Tech</div>
+          <h1>KADOSH <span>FINANCE</span></h1>
+          <div class="admin-tag">Admin</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="logoutBtn" type="button">Sair</button>
+    </div>
+
+    <div class="admin-summary-bar">
+      <span class="admin-user-count" id="adminUserCount">0 usuários cadastrados</span>
+      <input type="text" class="admin-search-input" id="adminSearch" placeholder="Buscar por e-mail…" autocomplete="off">
+    </div>
+
+    <div class="admin-report" id="adminReport"></div>
+    <div class="admin-empty" id="adminSearchEmpty" style="display:none">Nenhum usuário encontrado pra essa busca.</div>
+  </div>
+</div>
+
+<script>
+  // ========== SUPABASE — CLIENT (mesmo projeto do app principal) ==========
+  const SUPABASE_URL      = 'https://jfzcmofigewimasmhvfs.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_QmECvthsZi6MKr1HG6-vig_F3XqE3sk';
+  let sb = null;
+  try{
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }catch(e){
+    console.error('Falha ao iniciar o cliente Supabase:', e);
+  }
+  let currentUser = null;
+
+  function money(v){
+    const sign = v < 0 ? '-' : '';
+    return sign + 'R$ ' + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+
+  // ========== AUTH (idêntico ao index.html — mesmo componente reaproveitado) ==========
+  const authScreenEl = document.getElementById('authScreen');
+  const adminRootEl  = document.getElementById('adminRoot');
+  const loginFormEl  = document.getElementById('loginForm');
+  const loginBtnEl   = document.getElementById('loginSubmitBtn');
+  const authTabLoginEl    = document.getElementById('authTabLogin');
+  const authTabSignupEl   = document.getElementById('authTabSignup');
+  const passwordEl        = document.getElementById('loginPassword');
+  const passwordConfirmEl = document.getElementById('loginPasswordConfirm');
+
+  function authMsg(text, type){
+    const el = document.getElementById('authMsg');
+    el.textContent = text || '';
+    el.className = 'auth-msg' + (type ? (' ' + type) : '');
+  }
+
+  let authMode = 'login';
+  function setAuthMode(mode){
+    authMode = mode;
+    const isSignup = mode === 'signup';
+    authTabLoginEl.classList.toggle('active', !isSignup);
+    authTabSignupEl.classList.toggle('active', isSignup);
+    loginFormEl.classList.toggle('mode-signup', isSignup);
+    passwordEl.autocomplete = isSignup ? 'new-password' : 'current-password';
+    loginBtnEl.textContent = isSignup ? 'Criar Conta' : 'Entrar';
+    authMsg('');
+  }
+  authTabLoginEl.addEventListener('click', () => setAuthMode('login'));
+  authTabSignupEl.addEventListener('click', () => setAuthMode('signup'));
+
+  function translateAuthError(message){
+    const map = {
+      'Invalid login credentials': 'E-mail ou senha incorretos.',
+      'User already registered': 'Este e-mail já está cadastrado. Tente entrar.',
+      'Password should be at least 6 characters': 'A senha deve ter pelo menos 6 caracteres.',
+      'Email not confirmed': 'Confirme seu e-mail antes de entrar.',
+      'Unable to validate email address: invalid format': 'E-mail inválido.'
+    };
+    return map[message] || 'Não foi possível concluir. Tente novamente em instantes.';
+  }
+
+  loginFormEl.addEventListener('submit', async e => {
+    e.preventDefault();
+    if(!sb) return authMsg('Sem conexão com o servidor.', 'error');
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = passwordEl.value;
+
+    if(authMode === 'signup'){
+      if(password.length < 6) return authMsg('A senha deve ter pelo menos 6 caracteres.', 'error');
+      if(password !== passwordConfirmEl.value) return authMsg('As senhas não coincidem.', 'error');
+    }
+
+    loginBtnEl.disabled = true;
+    authMsg(authMode === 'signup' ? 'Criando conta...' : 'Entrando...');
+
+    const { error } = authMode === 'signup'
+      ? await sb.auth.signUp({ email, password })
+      : await sb.auth.signInWithPassword({ email, password });
+
+    loginBtnEl.disabled = false;
+    if(error){ authMsg(translateAuthError(error.message), 'error'); return; }
+    if(authMode === 'signup') authMsg('Conta criada! Entrando...', 'success');
+  });
+
+  async function logout(){
+    if(!sb) return;
+    await sb.auth.signOut();
+  }
+  document.getElementById('logoutBtn')?.addEventListener('click', logout);
+
+  // ========== RELATÓRIO ADMIN ==========
+  // Validação estrita: qualquer coisa que não seja "a RPC devolveu pelo
+  // menos 1 linha, sem erro" é tratada como NÃO-admin — null, array vazio
+  // ou erro caem todos no mesmo caminho. O shell do admin (#adminRoot,
+  // incluindo o topbar com a marca "Admin") só é revelado DEPOIS dessa
+  // checagem passar, nunca antes — antes disso a tela de login continua
+  // visível, então não-admin nunca vê nem a estrutura do painel.
+  //
+  // admin_report() agora parte de auth.users (LEFT JOIN), então TODO
+  // usuário cadastrado vem na resposta, mesmo sem nenhum lançamento — o
+  // que também torna a checagem "rows.length > 0" mais robusta: como o
+  // próprio admin sempre aparece na lista, não tem mais o caso de um
+  // admin sem lançamento próprio sendo tratado como não-admin.
+  let allAdminRows = [];
+
+  function updateUserCount(n){
+    const el = document.getElementById('adminUserCount');
+    el.textContent = n === 1 ? '1 usuário cadastrado' : `${n} usuários cadastrados`;
+  }
+
+  function renderAdminReport(rows){
+    const reportEl = document.getElementById('adminReport');
+    const emptyEl  = document.getElementById('adminSearchEmpty');
+    reportEl.innerHTML = '';
+
+    if(rows.length === 0){
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    rows.forEach(row => {
+      const card = document.createElement('div');
+      card.className = 'admin-user-card';
+      const categorias = row.categorias || [];
+      const corpoCategorias = categorias.length > 0
+        ? `<table class="admin-cat-table">${categorias.map(c => `<tr><td>${c.categoria}</td><td>${money(Number(c.valor) || 0)}</td></tr>`).join('')}</table>`
+        : `<div class="admin-user-nodata">Nenhum lançamento neste mês.</div>`;
+      card.innerHTML = `
+        <div class="admin-user-header">
+          <span class="admin-user-email">${row.email}</span>
+          <span class="admin-user-total">Total gasto no mês: ${money(Number(row.total_gastos) || 0)}</span>
+        </div>
+        <div class="admin-user-sub">Saldo inicial configurado: ${money(Number(row.saldo_inicial) || 0)}</div>
+        ${corpoCategorias}
+      `;
+      reportEl.appendChild(card);
+    });
+  }
+
+  function applyAdminFilter(){
+    const term = document.getElementById('adminSearch').value.trim().toLowerCase();
+    const filtered = term
+      ? allAdminRows.filter(r => (r.email || '').toLowerCase().includes(term))
+      : allAdminRows;
+    renderAdminReport(filtered);
+  }
+  document.getElementById('adminSearch')?.addEventListener('input', applyAdminFilter);
+
+  async function checkAdminAndRender(){
+    const { data, error } = await sb.rpc('admin_report');
+    const rows = Array.isArray(data) ? data : [];
+    const isAdmin = !error && rows.length > 0;
+
+    if(!isAdmin){
+      if(error) console.error('Erro ao verificar acesso admin:', error);
+      // desloga: onAuthStateChange (ramo "sem sessão") cuida de resetar a
+      // tela de login e o form sozinho, então só definimos a mensagem
+      // depois que esse reset já rodou.
+      await sb.auth.signOut();
+      authMsg('Nenhum dado disponível.', 'error');
+      return;
+    }
+
+    allAdminRows = rows;
+    updateUserCount(rows.length);
+    document.getElementById('adminSearch').value = '';
+    applyAdminFilter();
+    authScreenEl.style.display = 'none';
+    adminRootEl.style.display = '';
+  }
+
+  if(sb){
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if(session){
+        currentUser = session.user;
+        authMsg('Verificando acesso...');
+        await checkAdminAndRender();
+      } else {
+        currentUser = null;
+        adminRootEl.style.display = 'none';
+        authScreenEl.style.display = 'flex';
+        loginFormEl.reset();
+        setAuthMode('login');
+      }
+    });
+  } else {
+    authMsg('Não foi possível conectar ao servidor. Verifique sua internet e recarregue a página.', 'error');
+  }
+</script>
+</body>
+</html>

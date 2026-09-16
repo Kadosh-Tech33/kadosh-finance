@@ -21,16 +21,24 @@ Todos os dados de teste inseridos foram removidos ao final (confirmado por relei
 
 ## (a) admin.html / RPC `admin_report()`
 
-**Verificado:**
-- O código-fonte SQL da função `admin_report()` **não está neste repositório** (não há pasta `supabase/migrations` nem arquivo com `CREATE FUNCTION admin_report`) e esta sessão não tem credenciais de banco (`service_role` key / connection string) para ler `pg_proc` direto no Postgres. Portanto **não foi possível revisar o texto exato da função**. Isso é uma lacuna real desta auditoria — ver recomendação abaixo.
-- O que foi verificado é o comportamento real, de fora, chamando a RPC pela API pública:
-  - Login com a conta de teste **A** (recém-criada, não autorizada) → `sb.rpc('admin_report')` → HTTP 200, corpo `[]` (array vazio).
-  - Login com a conta de teste **B** (recém-criada, não autorizada) → mesmo resultado: HTTP 200, `[]`.
-  - Nenhuma das duas chamadas retornou dado de qualquer usuário (nem dela mesma, nem de terceiros).
-- Em `admin.html:390-411`, a decisão de mostrar o painel é `isAdmin = !error && rows.length > 0` — ou seja, **a decisão de quem é admin não é feita no client**: o client só decide se *mostra* a tela com base no que o servidor devolveu. Erro, `null` ou array vazio caem todos no mesmo caminho (nega acesso e desloga). O comentário no código (linhas 331-343) confirma que isso foi intencional.
-- Como a RPC devolveu `[]` (e não um erro de permissão) para as duas contas de teste, a lógica de quem é admin claramente não é "todo usuário autenticado" — está filtrando por algo (allowlist de e-mail, coluna de role, etc.) dentro da própria função no Postgres. **Não consigo confirmar qual é esse filtro exato sem o texto da função.**
+**Verificado — texto exato da função (agora versionado em [`db_schema_atual.sql`](db_schema_atual.sql)):**
+- `admin_report()` é `SECURITY DEFINER` com `SET search_path TO 'public'` fixo (boa prática contra search_path hijacking em função `SECURITY DEFINER`).
+- A primeira instrução do corpo é a checagem de autorização:
+  ```sql
+  if not exists (select 1 from public.admin_users a where a.user_id = auth.uid()) then
+    return;
+  end if;
+  ```
+  `auth.uid()` vem do JWT validado pelo servidor (GoTrue/PostgREST), não é algo que o client possa forjar. Se o usuário autenticado não estiver na tabela `admin_users`, a função **retorna sem executar nenhuma das queries seguintes** — ou seja, a decisão de quem é admin é 100% server-side, baseada em pertencimento a `admin_users`, e acontece *antes* de qualquer leitura de `auth.users`/`expenses`/`categories`/`monthly_balances`.
+  - Só depois desse gate a função (via `SECURITY DEFINER`, que bypassa RLS) faz `LEFT JOIN` de `auth.users` com os gastos do mês agregados por usuário — isso explica por que ela consegue listar todo usuário cadastrado mesmo sem lançamento (comentário em `admin.html:339-343`), coisa que uma query comum de um usuário sem privilégio não conseguiria (usuário comum não tem acesso a `auth.users`).
+- Em `admin.html:390-411`, a decisão de *mostrar* o painel no client é `isAdmin = !error && rows.length > 0` — client só reage ao que o servidor devolveu; erro, `null` ou array vazio caem todos no mesmo caminho (nega acesso e desloga).
 
-**Conclusão:** comportamento observado é o correto e consistente com "decisão 100% no servidor" — nenhum dado vazou para as contas não autorizadas. **Pendência:** revisar o texto real de `admin_report()` assim que o usuário puder colar o SQL (do SQL Editor do Supabase) ou adicionar um arquivo de migração com `CREATE OR REPLACE FUNCTION admin_report()` versionado neste repo — o que também resolve o rastreamento/auditoria futura pedido no item de commit.
+**Verificado — teste dinâmico (comportamento real, não só leitura de código):**
+- Login com a conta de teste **A** (recém-criada, não está em `admin_users`) → `sb.rpc('admin_report')` → HTTP 200, corpo `[]`.
+- Login com a conta de teste **B** (idem) → mesmo resultado: HTTP 200, `[]`.
+- Bate exatamente com o texto da função: nenhuma das duas está em `admin_users`, então o `if not exists (...) return;` barra as duas antes de montar qualquer resultado.
+
+**Conclusão:** confirmado tanto por leitura do código-fonte real da função quanto por teste ao vivo — a autorização de admin é inteiramente server-side, via tabela `admin_users`, sem nenhum caminho client-side que a contorne. Pendência anterior (não ter o texto da função) está resolvida — ver `db_schema_atual.sql`.
 
 ---
 
@@ -81,10 +89,11 @@ E, no sentido inverso, a conta A — mesmo pedindo `SELECT user_id` sem filtro n
 
 ## Limitações desta auditoria
 
-1. **Não foi lido o texto SQL de `admin_report()`** — não está no repo e esta sessão não tem `service_role key`/connection string do Postgres. O comportamento foi validado apenas por fora (black-box), o que é uma evidência forte mas não substitui revisão de código-fonte.
-2. **RLS policies das tabelas (`categories`, `expenses`, `monthly_balances`, `extra_incomes`) também não estão versionadas no repo** — só a migração de colunas novas está. A conclusão de "policy não foi enfraquecida" se apoia em (i) o diff da migração não tocar em nenhuma policy e (ii) teste dinâmico confirmando isolamento real hoje — não em comparação de texto antes/depois da policy.
-3. O caminho "positivo" do admin (conta autorizada vendo o relatório de todos) não foi testado nesta sessão.
+1. ~~Não foi lido o texto SQL de `admin_report()`~~ — **resolvido em 2026-09-16**: texto exato extraído do SQL Editor do Supabase pelo usuário e versionado em [`db_schema_atual.sql`](db_schema_atual.sql). Ver item (a) acima.
+2. ~~RLS policies das 4 tabelas não estavam versionadas~~ — **resolvido em 2026-09-16**: as 14 policies (`categories`, `expenses`, `extra_incomes`, `monthly_balances`), incluindo `roles` e `permissive`, também foram extraídas via `pg_policies` e versionadas em `db_schema_atual.sql`.
+3. O caminho "positivo" do admin (conta autorizada vendo o relatório de todos) não foi testado nesta sessão — segue como limitação em aberto, fora do escopo de uma auditoria com contas descartáveis.
+4. `db_schema_atual.sql` é um snapshot datado (2026-09-16), não uma sincronização automática — se a função ou as policies mudarem no Supabase depois dessa data, o arquivo fica desatualizado até alguém rodar as queries de extração de novo e atualizá-lo manualmente (instruções no topo do próprio arquivo).
 
 ## Recomendação
 
-Versionar neste repositório (novo arquivo, ex. `supabase_schema.sql` ou pasta `supabase/migrations/`) o `CREATE OR REPLACE FUNCTION admin_report()` e as `CREATE POLICY` de cada tabela, extraídos do SQL Editor do Supabase. Isso fecha as duas lacunas acima e permite que qualquer alteração futura nessas regras apareça no `git diff` e possa ser revisada como qualquer outro código — em vez de viver só dentro do painel do Supabase.
+Concluída: `admin_report()` e as `CREATE POLICY` das 4 tabelas agora estão versionadas em [`db_schema_atual.sql`](db_schema_atual.sql), extraídas do estado real do Supabase em 2026-09-16. Qualquer alteração futura nessas regras deve ser refletida ali (rodando de novo as duas queries de extração no topo do arquivo) para que a mudança apareça no `git diff` e continue servindo de registro auditável, em vez de essas regras viverem só dentro do painel do Supabase.

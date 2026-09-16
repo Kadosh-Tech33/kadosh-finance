@@ -1,0 +1,13 @@
+# SO / editores
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# Ferramentas locais que não fazem parte do projeto versionado
+.claude/
+graphify-out/
+
+# Ambiente
+.env
+.env.local

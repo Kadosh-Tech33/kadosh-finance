@@ -8,7 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="icon" type="image/png" href="img/faviconKadosh.png">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4" integrity="sha384-yiVMs0R/Jyz7OhoXa/DsEMUSBLjEhr/QJta2ONO+zB6I8/GmNg/7AUFrZmAJV7KV" crossorigin="anonymous"></script>
+<script src="config.js"></script>
 <style>
   :root{
     --navy: #193065;
@@ -369,9 +370,8 @@
 <script>
   // ========== SUPABASE — mesmo projeto/sessão do dashboard principal.
   // O client persiste a sessão no localStorage por padrão, então login
-  // feito no index.html já é enxergado aqui, sem pedir de novo. ==========
-  const SUPABASE_URL      = 'https://jfzcmofigewimasmhvfs.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_QmECvthsZi6MKr1HG6-vig_F3XqE3sk';
+  // feito no index.html já é enxergado aqui, sem pedir de novo.
+  // SUPABASE_URL e SUPABASE_ANON_KEY vêm de config.js (carregado no <head>). ==========
   let sb = null;
   try{
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

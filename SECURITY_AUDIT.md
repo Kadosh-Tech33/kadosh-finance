@@ -94,6 +94,68 @@ E, no sentido inverso, a conta A — mesmo pedindo `SELECT user_id` sem filtro n
 3. O caminho "positivo" do admin (conta autorizada vendo o relatório de todos) não foi testado nesta sessão — segue como limitação em aberto, fora do escopo de uma auditoria com contas descartáveis.
 4. `db_schema_atual.sql` é um snapshot datado (2026-09-16), não uma sincronização automática — se a função ou as policies mudarem no Supabase depois dessa data, o arquivo fica desatualizado até alguém rodar as queries de extração de novo e atualizá-lo manualmente (instruções no topo do próprio arquivo).
 
-## Recomendação
+## Recomendação (auditoria de 2026-09-16)
 
 Concluída: `admin_report()` e as `CREATE POLICY` das 4 tabelas agora estão versionadas em [`db_schema_atual.sql`](db_schema_atual.sql), extraídas do estado real do Supabase em 2026-09-16. Qualquer alteração futura nessas regras deve ser refletida ali (rodando de novo as duas queries de extração no topo do arquivo) para que a mudança apareça no `git diff` e continue servindo de registro auditável, em vez de essas regras viverem só dentro do painel do Supabase.
+
+---
+---
+
+# Auditoria de Segurança — 2026-09-23
+
+**Escopo:** (1) força bruta no login, (2) XSS armazenado via texto do usuário, (3) re-confirmação do isolamento RLS.
+**Commit base:** `2b4b1e7` (correção de XSS aplicada em cima dele).
+
+Mesma metodologia da auditoria anterior: chamadas diretas à API do Supabase (`/auth/v1`, `/rest/v1`) com a anon key pública, sem passar pelo client JS, mais Playwright (Chromium headless) contra as 3 páginas servidas localmente.
+
+Contas de teste criadas (não excluídas; a anon key não permite): `audit.test.a.1790192665285@kadoshtest.invalid` (`4c5c2d79-e976-4e31-b60a-4666def739e9`) e `audit.test.b.1790192665285@kadoshtest.invalid` (`87c8ab22-a7d0-460e-ae46-6f28a8b93f71`). Todo dado de teste foi removido, **exceto 1 linha em `monthly_balances` da conta A** (mês 2020-01), porque a tabela não tem policy de DELETE (comportamento esperado, ver `db_schema_atual.sql`). Também sobra, de um smoke test anterior no mesmo dia, a conta `smoketest+1790192053971@example.com`.
+
+## (1) Força bruta no login
+
+**Não verificado:** o valor configurado em Authentication → Rate Limits no painel. Não está no repositório, o endpoint público `/auth/v1/settings` não o expõe, e a Management API exige um token pessoal que não existe aqui. **Precisa ser lido no painel pelo dono do projeto.**
+
+**Verificado por teste real** (`POST /auth/v1/token?grant_type=password`, senha errada para o mesmo e-mail, em sequência):
+
+| Medição | Resultado |
+|---|---|
+| Primeiro 429 (`over_request_rate_limit`) | tentativa #35, após 9,5 s (34 respostas `400 invalid_credentials` antes) |
+| Ritmo sustentado (150 s contínuos, 1 req/250 ms) | ~30 tentativas processadas/minuto; o resto recebe 429 |
+| Duração do bloqueio após parar | liberado em até 61 s |
+| Escopo do bloqueio | **por IP**: durante o bloqueio, a senha *correta* da mesma conta e o login de *outra* conta também receberam 429 |
+| Tamanho mínimo de senha no servidor | 6 caracteres (`422 weak_password` com senha `"1"`) |
+| Confirmação de e-mail | desligada (`mailer_autoconfirm: true`): qualquer pessoa cria conta sem confirmar o e-mail |
+
+**Avaliação (para decisão, não aplicada):** o rate limit existe e funciona, mas é **por IP e sem bloqueio por conta**. Na prática, ~30 palpites/min ≈ 43 mil/dia por IP, e um atacante com vários IPs multiplica isso linearmente contra o mesmo e-mail. Com senha mínima de 6 caracteres, uma senha fraca/comum cai em horas. Não é adequado **sozinho** para senhas fracas. Opções nativas do Supabase (sem código no client): reduzir o limite de sign-in em Rate Limits; ativar CAPTCHA (Turnstile/hCaptcha) em Auth → Attack Protection; subir o tamanho mínimo e os requisitos de senha; ativar a proteção contra senhas vazadas (HaveIBeenPwned, disponível no plano Pro). Nenhum bloqueio client-side foi implementado, como pedido: não protegeria nada.
+
+## (2) XSS armazenado via texto do usuário
+
+**Pontos encontrados** (texto do banco interpolado sem escape em `innerHTML`):
+
+| Arquivo | Campo | Visto por |
+|---|---|---|
+| `admin.html` | `categorias[].categoria` (= `categories.nome`, ou `expenses.categoria_id` cru quando não há categoria) | **admin** (texto de qualquer usuário) |
+| `admin.html` | `email` | admin |
+| `index.html` | nome do card (`categories.nome`), tipo (`categories.tipo`), chip de renda (`extra_incomes.nome`), descrição no modal (`expenses.descricao`), nome no gráfico (lido de `textContent` e reinjetado em `innerHTML`) | o próprio usuário |
+| `historico.html` | nome da categoria no detalhamento; descrição no modal (texto e atributo `title`) | o próprio usuário |
+
+**Teste antes da correção:** payloads `<img src=x onerror="alert('TAG')">` com uma TAG única por campo, gravados pela API na conta A (armazenados literalmente, sem nenhuma sanitização no servidor). **Os 8 executaram:** `CAT_NOME` e `RENDA_NOME` no render inicial do index, `DESC_ATUAL` no modal do index, `CAT_NOME` e `DESC_HIST` no histórico, e `CAT_NOME`, `ADMIN_categoria_id` e `ADMIN_EMAIL` no admin.
+
+**Como o admin foi testado:** as contas de teste não são admin (a RPC real devolve `[]`). Para exercitar o código de renderização do painel, a resposta de `/rpc/admin_report` foi interceptada no navegador e substituída por linhas no formato exato da função, com o valor real gravado no banco. O caminho de dados até ali é direto: `admin_report()` repassa `c.nome`/`e.categoria_id` sem transformação, e é `SECURITY DEFINER`, então lê dados de todos. Um usuário comum só precisa renomear a própria categoria para atingir a sessão do admin. O caminho com uma conta admin real não foi testado.
+
+**E-mail como vetor:** o cadastro com HTML no e-mail foi recusado pelo Supabase Auth (`400 validation_failed`, 2 variações). O escape foi aplicado mesmo assim, como defesa extra.
+
+**Correção:** `escapeHtml()` (escapa `& < > " '`) em cada um dos 3 arquivos, aplicado em todos os pontos acima. O `textContent` já usado em outros lugares foi mantido.
+
+**Teste depois da correção:** mesmo roteiro e mesmos payloads. **Nenhum executou** nas 3 páginas, e o texto aparece literalmente (`<img src=x ...>` visível como texto) em todos os pontos. A varredura final por `${...}` com nome/descrição/e-mail/tipo sem escape só encontrou constantes do código.
+
+**Não coberto:** `category_key` controlado pelo usuário entra em seletores CSS (`.expense-card[data-id="..."]`). Um valor com aspas quebra o seletor, o que afeta só a página do próprio usuário. Não é XSS e não foi alterado.
+
+## (3) Isolamento RLS: sem regressão
+
+Conta A com 1 registro em cada uma das 4 tabelas; conta B sem dados. **36/36 checks passaram:**
+
+- B, nas 4 tabelas: `SELECT *` sem filtro → 0 linhas; `SELECT` pelo registro exato de A → 0; `UPDATE` → 0 afetadas; `DELETE` → 0 afetadas. Registro de A intacto depois.
+- Sem login (só anon key): 0 linhas nas 4 tabelas.
+- A, `SELECT user_id` sem filtro: só linhas próprias nas 4 tabelas.
+- **Novo:** B tentou plantar dado na conta de A (`INSERT` com `user_id = A` em `categories` e `extra_incomes`; `UPDATE` do `user_id` da própria linha para A em `categories` e `expenses`) → todos `403 / 42501`. Ou seja, um usuário não consegue injetar payload XSS na conta de outro, e o único alvo cruzado real é o admin (item 2).
+- `admin_report` como A, como B e sem login → `200 []`.

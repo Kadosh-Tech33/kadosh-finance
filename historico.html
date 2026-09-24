@@ -403,6 +403,11 @@
     const sign = v < 0 ? '-' : '';
     return sign + 'R$ ' + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
   }
+  // Todo texto vindo do banco (nome de categoria, descrição) passa por aqui
+  // antes de entrar num template de innerHTML — evita XSS armazenado.
+  function escapeHtml(s){
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
 
   let currentUser = null;
   let categoriesById = {};        // category_key -> linha de `categories` (nome, tipo, deleted…)
@@ -663,7 +668,7 @@
       row.innerHTML = `
         <div class="cat-detail-top">
           <div class="cat-detail-name">
-            <span class="cat-name-text">${r.nome}</span>
+            <span class="cat-name-text">${escapeHtml(r.nome)}</span>
             ${r.recorrente ? '<span class="recorrente-badge">Recorrente</span>' : ''}
           </div>
           <div class="cat-detail-val">${money(r.val)}</div>
@@ -696,7 +701,7 @@
         const [, m, d] = (entry.data || '').split('-');
         row.innerHTML = `
           <span class="entry-row-date">${d && m ? `${d}/${m}` : '—'}</span>
-          <span class="entry-row-desc" title="${entry.descricao || ''}">${entry.descricao || '(sem descrição)'}</span>
+          <span class="entry-row-desc" title="${escapeHtml(entry.descricao)}">${entry.descricao ? escapeHtml(entry.descricao) : '(sem descrição)'}</span>
           <span class="entry-row-val">${money(entry.valor)}</span>
         `;
         container.appendChild(row);

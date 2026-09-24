@@ -243,6 +243,12 @@
 </div>
 
 <script>
+  // Todo texto vindo do banco (nome de categoria, categoria_id, e-mail) passa
+  // por aqui antes de entrar num template de innerHTML — esse texto é criado
+  // por QUALQUER usuário e exibido na sessão do admin (XSS armazenado).
+  function escapeHtml(s){
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
   // ========== SUPABASE — CLIENT (mesmo projeto do app principal) ==========
   // SUPABASE_URL e SUPABASE_ANON_KEY vêm de config.js (carregado no <head>).
   let sb = null;
@@ -364,11 +370,11 @@
       card.className = 'admin-user-card';
       const categorias = row.categorias || [];
       const corpoCategorias = categorias.length > 0
-        ? `<table class="admin-cat-table">${categorias.map(c => `<tr><td>${c.categoria}</td><td>${money(Number(c.valor) || 0)}</td></tr>`).join('')}</table>`
+        ? `<table class="admin-cat-table">${categorias.map(c => `<tr><td>${escapeHtml(c.categoria)}</td><td>${money(Number(c.valor) || 0)}</td></tr>`).join('')}</table>`
         : `<div class="admin-user-nodata">Nenhum lançamento neste mês.</div>`;
       card.innerHTML = `
         <div class="admin-user-header">
-          <span class="admin-user-email">${row.email}</span>
+          <span class="admin-user-email">${escapeHtml(row.email)}</span>
           <span class="admin-user-total">Total gasto no mês: ${money(Number(row.total_gastos) || 0)}</span>
         </div>
         <div class="admin-user-sub">Saldo inicial configurado: ${money(Number(row.saldo_inicial) || 0)}</div>

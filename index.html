@@ -1188,10 +1188,10 @@
         <div class="expense-icon">${icons[item.icon] || icons.outro}</div>
         <div class="expense-info">
           <div class="expense-name-wrap">
-            <div class="expense-name" data-card-name>${item.name}</div>
+            <div class="expense-name" data-card-name>${escapeHtml(item.name)}</div>
             <button class="name-edit-btn" type="button" title="Renomear">${pencilSVG}</button>
           </div>
-          <div class="expense-type">${isCard ? CARTAO_TYPE_LABEL : item.type}</div>
+          <div class="expense-type">${isCard ? CARTAO_TYPE_LABEL : escapeHtml(item.type)}</div>
         </div>
       </div>
       ${!isGoal ? `<div class="card-due-line" data-card-due></div>` : ''}
@@ -1488,6 +1488,12 @@
     // mesmo card, mesmo loop, só o cálculo muda)
     document.querySelectorAll('.expense-card').forEach(card => {
       const id = card.dataset.id;
+  // Todo texto vindo do usuário/banco (nome de categoria, tipo, descrição,
+  // nome de renda extra) passa por aqui antes de entrar num template de
+  // innerHTML — evita XSS armazenado.
+  function escapeHtml(s){
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
       const valor = gastos[id] || 0;
       const isGoal = card.classList.contains('is-goal');
       const isCard = card.classList.contains('is-card');
@@ -1916,7 +1922,7 @@
     const chip = document.createElement('div');
     chip.className = 'renda-chip';
     chip.dataset.id = renda.id;
-    chip.innerHTML = `<span>${renda.name} <i>${formatDateShort(renda.data)}</i>: <b>${money(renda.value)}</b></span>
+    chip.innerHTML = `<span>${escapeHtml(renda.name)} <i>${formatDateShort(renda.data)}</i>: <b>${money(renda.value)}</b></span>
       <button class="renda-chip-x" type="button" title="Remover">&#215;</button>`;
     chip.querySelector('.renda-chip-x').addEventListener('click', () => removeRendaExtra(renda.id));
     document.getElementById('rendaChips').appendChild(chip);
@@ -2233,7 +2239,7 @@
     row.innerHTML = `
       <button class="entry-row-paid-toggle" type="button" title="${entry.is_paid ? 'Marcar como não pago' : 'Marcar como pago'}">${checkSVG}</button>
       <span class="entry-row-date">${formatDateShort(entry.data)}</span>
-      <span class="entry-row-desc">${desc || '(sem descrição)'}</span>
+      <span class="entry-row-desc">${desc ? escapeHtml(desc) : '(sem descrição)'}</span>
       <span class="entry-row-val">${money(entry.valor)}</span>
       <button class="entry-row-edit-btn" type="button" title="Editar">${pencilSVG}</button>
       <button class="entry-row-del" type="button" title="Remover">${trashSVG}</button>
@@ -2618,13 +2624,14 @@
       const row = document.createElement('div');
       row.className = 'chart-bar-row';
       row.innerHTML = `
-        <div class="chart-bar-name" title="${name}">${name}</div>
+        <div class="chart-bar-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
         <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div></div>
         <div class="chart-bar-pct">${pct.toFixed(0)}%</div>
         <div class="chart-bar-val">${money(val)}</div>`;
       area.appendChild(row);
     });
   }
+      // name vem do textContent do card (já decodificado) — precisa escapar de novo.
 
   document.querySelectorAll('.chart-view-tab').forEach(btn => {
     btn.addEventListener('click', () => {

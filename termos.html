@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Termos de Uso — Kadosh Finance</title>
+<link rel="icon" type="image/png" href="img/faviconKadosh.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #193065;
+    --navy-deep: #0e1c40;
+    --blue: #218cc9;
+    --blue-light: #4fb3e8;
+    --bg: #f4f7fb;
+    --panel: #ffffff;
+    --border: #e3e9f2;
+    --text: #14213d;
+    --text-soft: #6b7688;
+    --warn: #c98a12;
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+    --shadow: 0 1px 2px rgba(20,33,61,0.04), 0 12px 32px -12px rgba(20,33,61,0.12);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    font-family:'Manrope', sans-serif; color:var(--text); line-height:1.65;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(33,140,201,0.08), transparent 60%),
+      var(--bg);
+    min-height:100vh;
+  }
+  .wrap{ max-width:760px; margin:0 auto; padding:32px 16px 56px; }
+
+  .terms-head{
+    background: linear-gradient(150deg, var(--navy) 0%, var(--navy-deep) 65%, #0a1633 100%);
+    border-radius:var(--radius-lg); padding:32px 32px 28px; color:#fff;
+    position:relative; overflow:hidden; margin-bottom:20px;
+  }
+  .terms-head::before{
+    content:""; position:absolute; top:-60px; right:-60px; width:240px; height:240px; border-radius:50%;
+    background: radial-gradient(circle, rgba(79,179,232,0.35), transparent 70%);
+  }
+  .terms-brand{ position:relative; display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+  .terms-brand img{ width:40px; height:40px; border-radius:11px; }
+  .terms-brand span{ font-family:'Bebas Neue', sans-serif; font-size:22px; letter-spacing:0.02em; }
+  .terms-brand span b{ color:var(--blue-light); font-weight:400; }
+  .terms-head h1{ position:relative; font-family:'Bebas Neue', sans-serif; font-weight:400; font-size:44px; letter-spacing:0.02em; line-height:1; }
+  .terms-meta{ position:relative; margin-top:10px; font-size:13px; color:rgba(255,255,255,0.65); }
+
+  .terms-body{
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-lg);
+    box-shadow:var(--shadow); padding:32px;
+  }
+  .terms-body h2{
+    font-family:'Bebas Neue', sans-serif; font-weight:400; font-size:24px; letter-spacing:0.02em;
+    color:var(--navy); line-height:1.1; margin:30px 0 8px;
+  }
+  .terms-body > h2:first-child{ margin-top:0; }
+  .terms-body p, .terms-body li{ font-size:15px; color:var(--text); }
+  .terms-body p + p, .terms-body ul + p{ margin-top:10px; }
+  .terms-body ul{ margin:8px 0 0 20px; }
+  .terms-body li + li{ margin-top:6px; }
+  .terms-body a{ color:var(--blue); font-weight:700; }
+  .terms-body strong{ font-weight:800; }
+
+  /* Seção de destaque — propositalmente fora do padrão navy/azul do resto do texto. */
+  .terms-highlight{
+    margin:32px 0; padding:24px 24px 22px;
+    background:#fff8e8; border:2px solid var(--warn); border-left-width:8px;
+    border-radius:var(--radius-md);
+    box-shadow:0 12px 32px -16px rgba(201,138,18,0.45);
+  }
+  .terms-highlight-badge{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--warn); color:#fff; border-radius:100px; padding:4px 12px;
+    font-size:11.5px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase;
+  }
+  .terms-body .terms-highlight h2{ color:#7a5208; margin:12px 0 10px; font-size:28px; }
+  .terms-body .terms-highlight p, .terms-body .terms-highlight li{ color:#3d2a05; }
+
+  .terms-body .terms-back{
+    display:inline-block; margin-top:24px; padding:12px 20px; border-radius:var(--radius-sm);
+    background:linear-gradient(135deg,var(--navy),var(--blue)); color:#fff;
+    font-weight:800; font-size:14px; text-decoration:none;
+  }
+  .terms-body .terms-back:hover{ opacity:.9; }
+
+  @media (max-width:560px){
+    .terms-head{ padding:26px 20px 22px; border-radius:var(--radius-md); }
+    .terms-head h1{ font-size:36px; }
+    .terms-body{ padding:22px 18px; border-radius:var(--radius-md); }
+    .terms-highlight{ padding:20px 16px 18px; border-left-width:6px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="terms-head">
+    <div class="terms-brand">
+      <img src="img/logoKadosh.png" alt="">
+      <span>KADOSH <b>FINANCE</b></span>
+    </div>
+    <h1>Termos de Uso</h1>
+    <p class="terms-meta">Versão 1 · Última atualização: 24 de setembro de 2026</p>
+  </header>
+
+  <main class="terms-body">
+
+    <h2>1. Sobre o Kadosh Finance</h2>
+    <p>O Kadosh Finance é um aplicativo de organização financeira pessoal, desenvolvido pela Kadosh Tech e atualmente em <strong>fase de teste (beta)</strong>. Nele você registra seu saldo, suas categorias de gasto, seus lançamentos, rendas extras, metas e cartões, e acompanha o resumo do mês e o histórico.</p>
+    <p>Todas as informações financeiras do app são digitadas por você. O Kadosh Finance não acessa nenhuma outra conta sua, não movimenta dinheiro e não oferece recomendação de investimento: os números e gráficos servem apenas para a sua organização.</p>
+
+    <h2>2. Aceitação destes termos</h2>
+    <p>Ao criar uma conta e marcar a opção "Li e aceito os Termos de Uso", você confirma que leu e concorda com este documento. Registramos a data e o horário desse aceite. Se não concordar com algum ponto, não crie a conta.</p>
+
+    <h2>3. Dados que coletamos</h2>
+    <ul>
+      <li><strong>Dados de cadastro:</strong> e-mail, telefone e senha. A senha é guardada de forma criptografada pelo sistema de autenticação e não fica visível para ninguém da equipe.</li>
+      <li><strong>Dados financeiros que você registra:</strong> saldo inicial, categorias, lançamentos (valor, data e descrição), rendas extras, metas e dados de cartão que você informar (nome, limite e dias de fechamento e vencimento; nunca número do cartão).</li>
+      <li><strong>Registro de aceite:</strong> data e horário em que você aceitou estes termos.</li>
+      <li><strong>Dados técnicos de acesso:</strong> informações como endereço IP e horário das requisições, registradas automaticamente pelo provedor de infraestrutura para fins de segurança e funcionamento do serviço.</li>
+    </ul>
+
+    <h2>4. Para que usamos os dados</h2>
+    <ul>
+      <li>Criar e manter sua conta e permitir o seu login.</li>
+      <li>Salvar e exibir suas informações financeiras para você, em qualquer dispositivo em que entrar.</li>
+      <li>Entrar em contato com você sobre a sua conta e dar suporte durante o beta (telefone e e-mail).</li>
+      <li>Identificar erros e melhorar o produto, conforme descrito na seção destacada abaixo.</li>
+      <li>Proteger o serviço contra acessos indevidos e abusos.</li>
+    </ul>
+    <p>Não vendemos seus dados e não os usamos para publicidade.</p>
+
+    <section class="terms-highlight" aria-labelledby="beta-visibilidade">
+      <span class="terms-highlight-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+        Leia com atenção
+      </span>
+      <h2 id="beta-visibilidade">Visibilidade de Dados Durante o Beta</h2>
+      <p>Enquanto o Kadosh Finance estiver em fase de teste, <strong>contas autorizadas da equipe podem visualizar os lançamentos financeiros de qualquer usuário</strong>, incluindo valores, categorias, descrições e saldo informado, junto com o e-mail da conta.</p>
+      <p>Esse acesso existe exclusivamente para identificar bugs e melhorar o produto, é restrito a poucas contas da equipe e não é usado para nenhuma outra finalidade.</p>
+      <p><strong>Você pode revogar essa autorização a qualquer momento</strong>, entrando em contato pelo canal indicado na seção 11.</p>
+    </section>
+
+    <h2>5. Compartilhamento</h2>
+    <p>Seus dados ficam armazenados na infraestrutura do Supabase, provedor contratado para hospedar o banco de dados e a autenticação do app, que os processa apenas para operar o serviço. Fora isso, só compartilharemos dados se houver obrigação legal ou ordem de autoridade competente.</p>
+
+    <h2>6. Segurança</h2>
+    <p>Cada conta só enxerga os próprios dados: essa separação é aplicada no próprio banco de dados, não apenas na tela do app. As exceções são as contas da equipe descritas na seção destacada acima. Adotamos cuidados razoáveis de segurança, mas nenhum sistema é totalmente imune a falhas; por isso, use uma senha forte e exclusiva para o Kadosh Finance.</p>
+
+    <h2>7. Seus direitos</h2>
+    <p>Nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018), você pode, a qualquer momento, pedir para: confirmar se tratamos seus dados; acessar uma cópia deles; corrigir dados incompletos ou desatualizados; excluir sua conta e seus dados; e revogar autorizações que tenha dado. Basta entrar em contato pelo canal da seção 11.</p>
+
+    <h2>8. Suas responsabilidades</h2>
+    <ul>
+      <li>Manter sua senha em sigilo e não compartilhar sua conta.</li>
+      <li>Informar um e-mail e um telefone que sejam seus.</li>
+      <li>Não tentar acessar dados de outras pessoas nem interferir no funcionamento do serviço.</li>
+    </ul>
+
+    <h2>9. Natureza do beta</h2>
+    <p>Por estar em teste, o app pode apresentar erros, mudar de funcionamento ou ficar temporariamente indisponível. Confira os valores importantes antes de tomar decisões com base neles. Recursos do beta podem ser alterados ou removidos.</p>
+
+    <h2>10. Alterações nestes termos</h2>
+    <p>Podemos atualizar estes termos. Quando isso acontecer, a versão e a data no topo desta página serão alteradas e, se a mudança for relevante, pediremos um novo aceite no app.</p>
+
+    <h2>11. Contato</h2>
+    <p>Para dúvidas, pedidos sobre seus dados (LGPD), revogação de autorizações ou exclusão da conta, escreva para o canal oficial da Kadosh Tech: <a href="mailto:kadoshtech33@gmail.com">kadoshtech33@gmail.com</a>. Envie a mensagem a partir do e-mail cadastrado na sua conta, para que possamos confirmar que o pedido é seu.</p>
+    <p>Estes termos são regidos pelas leis brasileiras.</p>
+
+    <a class="terms-back" href="index.html">Voltar para o Kadosh Finance</a>
+  </main>
+
+</div>
+</body>
+</html>

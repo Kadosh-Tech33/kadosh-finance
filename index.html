@@ -769,8 +769,31 @@
   }
   .auth-tab-btn.active{ background:linear-gradient(135deg,var(--blue),var(--blue-light)); color:#fff; }
   .auth-form{ position:relative; z-index:1; display:flex; flex-direction:column; gap:12px; }
-  .auth-form .field-confirm{ display:none; }
-  .auth-form.mode-signup .field-confirm{ display:block; }
+  .auth-form .field-confirm, .auth-form .field-signup{ display:none; }
+  .auth-form.mode-signup .field-confirm, .auth-form.mode-signup .field-signup{ display:block; }
+  .auth-form.mode-signup .auth-terms{ display:flex; }
+  .pw-wrap{ position:relative; }
+  .auth-form .pw-wrap input{ padding-right:46px; }
+  .pw-toggle{
+    position:absolute; top:50%; right:6px; transform:translateY(-50%);
+    width:36px; height:36px; display:flex; align-items:center; justify-content:center;
+    background:none; border:none; border-radius:10px; cursor:pointer;
+    color:rgba(255,255,255,0.55); transition:color .2s, background .2s;
+  }
+  .pw-toggle:hover, .pw-toggle:focus-visible{ color:#fff; background:rgba(255,255,255,0.08); outline:none; }
+  .pw-toggle .pw-eye-off{ display:none; }
+  .pw-toggle[aria-pressed="true"] .pw-eye{ display:none; }
+  .pw-toggle[aria-pressed="true"] .pw-eye-off{ display:block; }
+  .auth-form label.auth-terms{
+    align-items:flex-start; gap:10px; margin-top:4px; cursor:pointer;
+    font-size:13px; letter-spacing:0; text-transform:none; font-weight:600;
+    color:rgba(255,255,255,0.8); line-height:1.4;
+  }
+  .auth-form .auth-terms input{
+    width:18px; height:18px; flex-shrink:0; margin-top:1px; padding:0;
+    accent-color:var(--blue-light); cursor:pointer;
+  }
+  .auth-terms a{ color:var(--blue-light); font-weight:700; text-decoration:underline; text-underline-offset:2px; }
   .auth-form label{
     font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-weight:700;
     color:rgba(255,255,255,0.55);
@@ -831,10 +854,28 @@
     <form class="auth-form" id="loginForm">
       <label for="loginEmail">E-mail</label>
       <input type="email" id="loginEmail" placeholder="voce@email.com" autocomplete="email" required>
+      <label for="signupPhone" class="field-signup">Telefone</label>
+      <input type="tel" id="signupPhone" class="field-signup" placeholder="(11) 91234-5678" inputmode="numeric" autocomplete="tel-national" maxlength="15">
       <label for="loginPassword">Senha</label>
-      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+      <div class="pw-wrap">
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+        <button type="button" class="pw-toggle" data-pw-toggle="loginPassword" aria-label="Mostrar senha" aria-pressed="false">
+          <svg class="pw-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="pw-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+        </button>
+      </div>
       <label for="loginPasswordConfirm" class="field-confirm">Confirmar senha</label>
-      <input type="password" id="loginPasswordConfirm" class="field-confirm" placeholder="••••••••" autocomplete="new-password">
+      <div class="pw-wrap field-confirm">
+        <input type="password" id="loginPasswordConfirm" placeholder="••••••••" autocomplete="new-password">
+        <button type="button" class="pw-toggle" data-pw-toggle="loginPasswordConfirm" aria-label="Mostrar senha" aria-pressed="false">
+          <svg class="pw-eye" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="pw-eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+        </button>
+      </div>
+      <label class="auth-terms field-signup" for="signupTerms">
+        <input type="checkbox" id="signupTerms">
+        <span>Li e aceito os <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a></span>
+      </label>
       <button type="submit" class="btn-auth-submit" id="loginSubmitBtn">Entrar</button>
     </form>
     <p class="auth-msg" id="authMsg"></p>
@@ -964,7 +1005,7 @@
     </div>
   </div>
 
-  <div class="footnote">Desenvolvido por <a href="https://kadosh-tech.vercel.app/" target="_blank" rel="noopener noreferrer">Kadosh Tech</a></div>
+  <div class="footnote">Desenvolvido por <a href="https://kadosh-tech.vercel.app/" target="_blank" rel="noopener noreferrer">Kadosh Tech</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a></div>
 
 </div>
 
@@ -1447,6 +1488,12 @@
     const sign = v < 0 ? '-' : '';
     return sign + 'R$ ' + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
   }
+  // Todo texto vindo do usuário/banco (nome de categoria, tipo, descrição,
+  // nome de renda extra) passa por aqui antes de entrar num template de
+  // innerHTML — evita XSS armazenado.
+  function escapeHtml(s){
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
 
   function recalc(){
     // gastos[] já vem filtrado pelo período ativo (recomputeGastosFromEntries).
@@ -1488,12 +1535,6 @@
     // mesmo card, mesmo loop, só o cálculo muda)
     document.querySelectorAll('.expense-card').forEach(card => {
       const id = card.dataset.id;
-  // Todo texto vindo do usuário/banco (nome de categoria, tipo, descrição,
-  // nome de renda extra) passa por aqui antes de entrar num template de
-  // innerHTML — evita XSS armazenado.
-  function escapeHtml(s){
-    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-  }
       const valor = gastos[id] || 0;
       const isGoal = card.classList.contains('is-goal');
       const isCard = card.classList.contains('is-card');
@@ -2590,8 +2631,9 @@
       const row = document.createElement('div');
       row.className = 'chart-bar-row';
       row.title = 'Ver lançamentos';
+      // name vem do textContent do card (já decodificado) — precisa escapar de novo.
       row.innerHTML = `
-        <div class="chart-bar-name" title="${name}">${name}</div>
+        <div class="chart-bar-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
         <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div></div>
         <div class="chart-bar-pct">${pct.toFixed(0)}%</div>
         <div class="chart-bar-val">${money(val)}</div>`;
@@ -2624,14 +2666,13 @@
       const row = document.createElement('div');
       row.className = 'chart-bar-row';
       row.innerHTML = `
-        <div class="chart-bar-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+        <div class="chart-bar-name" title="${name}">${name}</div>
         <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div></div>
         <div class="chart-bar-pct">${pct.toFixed(0)}%</div>
         <div class="chart-bar-val">${money(val)}</div>`;
       area.appendChild(row);
     });
   }
-      // name vem do textContent do card (já decodificado) — precisa escapar de novo.
 
   document.querySelectorAll('.chart-view-tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2651,6 +2692,32 @@
   const authTabSignupEl   = document.getElementById('authTabSignup');
   const passwordEl        = document.getElementById('loginPassword');
   const passwordConfirmEl = document.getElementById('loginPasswordConfirm');
+  const phoneEl           = document.getElementById('signupPhone');
+  const termsEl           = document.getElementById('signupTerms');
+
+  // Máscara (XX) XXXXX-XXXX (celular, 11 dígitos) ou (XX) XXXX-XXXX (fixo, 10).
+  function formatPhone(digits){
+    const d = digits.slice(0, 11);
+    if(d.length <= 2) return d.length ? `(${d}` : '';
+    const ddd = d.slice(0, 2), rest = d.slice(2);
+    const split = d.length === 11 ? 5 : 4;
+    return rest.length <= split ? `(${ddd}) ${rest}` : `(${ddd}) ${rest.slice(0, split)}-${rest.slice(split)}`;
+  }
+  phoneEl.addEventListener('input', () => {
+    phoneEl.value = formatPhone(phoneEl.value.replace(/\D/g, ''));
+  });
+
+  // Olho nos campos de senha: alterna type password/text.
+  function setPasswordVisible(btn, visible){
+    const input = document.getElementById(btn.dataset.pwToggle);
+    input.type = visible ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', String(visible));
+    btn.setAttribute('aria-label', visible ? 'Ocultar senha' : 'Mostrar senha');
+  }
+  const pwToggleEls = document.querySelectorAll('[data-pw-toggle]');
+  pwToggleEls.forEach(btn => btn.addEventListener('click', () => {
+    setPasswordVisible(btn, btn.getAttribute('aria-pressed') !== 'true');
+  }));
 
   function authMsg(text, type){
     const el = document.getElementById('authMsg');
@@ -2667,6 +2734,7 @@
     loginFormEl.classList.toggle('mode-signup', isSignup);
     passwordEl.autocomplete = isSignup ? 'new-password' : 'current-password';
     loginBtnEl.textContent = isSignup ? 'Criar Conta' : 'Entrar';
+    pwToggleEls.forEach(btn => setPasswordVisible(btn, false));
     authMsg('');
   }
   authTabLoginEl.addEventListener('click', () => setAuthMode('login'));
@@ -2688,17 +2756,23 @@
     if(!sb) return authMsg('Sem conexão com o servidor.', 'error');
     const email = document.getElementById('loginEmail').value.trim();
     const password = passwordEl.value;
+    const telefone = phoneEl.value.replace(/\D/g, '');
 
     if(authMode === 'signup'){
+      if(telefone.length < 10) return authMsg('Informe um telefone válido com DDD.', 'error');
       if(password.length < 6) return authMsg('A senha deve ter pelo menos 6 caracteres.', 'error');
       if(password !== passwordConfirmEl.value) return authMsg('As senhas não coincidem.', 'error');
+      if(!termsEl.checked) return authMsg('Para criar a conta, aceite os Termos de Uso.', 'error');
     }
 
     loginBtnEl.disabled = true;
     authMsg(authMode === 'signup' ? 'Criando conta...' : 'Entrando...');
 
+    // Telefone e aceite vão no user_metadata; o trigger do banco
+    // (migration_6_cadastro_termos.sql) grava em profiles, com o horário
+    // do aceite vindo do servidor.
     const { error } = authMode === 'signup'
-      ? await sb.auth.signUp({ email, password })
+      ? await sb.auth.signUp({ email, password, options: { data: { telefone, aceitou_termos: true } } })
       : await sb.auth.signInWithPassword({ email, password });
 
     loginBtnEl.disabled = false;

@@ -13,6 +13,13 @@
 -- queries acima de novo e substituindo o conteúdo correspondente, pra
 -- manter isso como fonte de verdade versionada. Ver SECURITY_AUDIT.md
 -- pra o contexto da auditoria que motivou este arquivo.
+--
+-- ATUALIZADO em 2026-09-24 à mão, a partir de migration_6_cadastro_termos.sql
+-- e migration_7_visibilidade_admin.sql (tabela profiles, helper
+-- visivel_para_admin(), policies select_own_or_admin e admin_report() com o
+-- filtro de visibilidade). NÃO foi re-extraído do banco — rode de novo as
+-- queries acima (incluindo 'profiles' na lista de tabelas) pra confirmar
+-- que o estado real bate com este arquivo.
 
 -- ============================================================
 -- Tabela de apoio referenciada pelas policies e pela função.
@@ -84,9 +91,85 @@ begin
   left join agregado_por_usuario apu on apu.user_id = u.id
   left join public.monthly_balances mb
     on mb.user_id = u.id and mb.mes_referencia = (select ref from mes_atual)
+  left join public.profiles pf on pf.user_id = u.id
+  where coalesce(pf.visivel_para_admin, true)
   order by coalesce(apu.total_gastos, 0) desc, u.email asc;
 end;
 $function$;
+
+
+-- ============================================================
+-- TABELA profiles (migration_6) + visibilidade admin (migration_7)
+--
+-- 1 linha por usuário, criada pelo trigger on_auth_user_created_profile
+-- no insert de auth.users (telefone e aceite vêm do user_metadata do
+-- signUp; aceitou_termos_em = now() do servidor). Client só lê a própria
+-- linha — sem policy de insert/update/delete.
+--
+-- visivel_para_admin = false tira o usuário de tudo que uma conta admin
+-- vê (5 policies + admin_report). Revogação manual pelo SQL Editor — ver
+-- o comando no topo de migration_7_visibilidade_admin.sql.
+-- ============================================================
+
+create table public.profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  telefone text,
+  aceitou_termos_em timestamptz,
+  created_at timestamptz not null default now(),
+  visivel_para_admin boolean not null default true
+);
+
+-- SECURITY DEFINER de propósito: lida pelas policies, precisa enxergar a
+-- linha de profiles mesmo quando a RLS de profiles a esconderia do admin.
+create or replace function public.visivel_para_admin(uid uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path to 'public'
+as $$
+  select coalesce(
+    (select p.visivel_para_admin from public.profiles p where p.user_id = uid),
+    true
+  );
+$$;
+
+create or replace function public.handle_new_user_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare
+  meta jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
+begin
+  insert into public.profiles (user_id, telefone, aceitou_termos_em)
+  values (
+    new.id,
+    nullif(left(regexp_replace(coalesce(meta->>'telefone', ''), '\D', '', 'g'), 11), ''),
+    case when meta->>'aceitou_termos' = 'true' then now() else null end
+  )
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created_profile
+  after insert on auth.users
+  for each row execute function public.handle_new_user_profile();
+
+create policy select_own_or_admin
+  on public.profiles
+  as permissive
+  for select
+  to authenticated
+  using (
+    (auth.uid() = user_id)
+    or (
+      (auth.uid() in (select admin_users.user_id from admin_users))
+      and public.visivel_para_admin(user_id)
+    )
+  );
 
 
 -- ============================================================
@@ -121,7 +204,10 @@ create policy select_own_or_admin
   to authenticated
   using (
     (auth.uid() = user_id)
-    or (auth.uid() in (select admin_users.user_id from admin_users))
+    or (
+      (auth.uid() in (select admin_users.user_id from admin_users))
+      and public.visivel_para_admin(user_id)
+    )
   );
 
 
@@ -157,7 +243,10 @@ create policy select_own_or_admin
   to authenticated
   using (
     (auth.uid() = user_id)
-    or (auth.uid() in (select admin_users.user_id from admin_users))
+    or (
+      (auth.uid() in (select admin_users.user_id from admin_users))
+      and public.visivel_para_admin(user_id)
+    )
   );
 
 
@@ -186,7 +275,10 @@ create policy select_own_or_admin
   to authenticated
   using (
     (auth.uid() = user_id)
-    or (auth.uid() in (select admin_users.user_id from admin_users))
+    or (
+      (auth.uid() in (select admin_users.user_id from admin_users))
+      and public.visivel_para_admin(user_id)
+    )
   );
 
 
@@ -222,5 +314,8 @@ create policy select_own_or_admin
   to authenticated
   using (
     (auth.uid() = user_id)
-    or (auth.uid() in (select admin_users.user_id from admin_users))
+    or (
+      (auth.uid() in (select admin_users.user_id from admin_users))
+      and public.visivel_para_admin(user_id)
+    )
   );

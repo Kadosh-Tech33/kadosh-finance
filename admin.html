@@ -83,17 +83,7 @@
   }
   .auth-brand h1 span{ color:var(--blue-light); }
   .auth-brand p{ font-size:13px; color:rgba(255,255,255,0.6); margin-top:8px; }
-  .auth-tabs{ position:relative; z-index:1; display:flex; gap:8px; margin-bottom:20px; }
-  .auth-tab-btn{
-    flex:1; padding:10px; border:none; border-radius:var(--radius-sm);
-    background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.55);
-    font-family:'Manrope',sans-serif; font-weight:700; font-size:13px;
-    cursor:pointer; transition:background .2s, color .2s;
-  }
-  .auth-tab-btn.active{ background:linear-gradient(135deg,var(--blue),var(--blue-light)); color:#fff; }
   .auth-form{ position:relative; z-index:1; display:flex; flex-direction:column; gap:12px; }
-  .auth-form .field-confirm{ display:none; }
-  .auth-form.mode-signup .field-confirm{ display:block; }
   .auth-form label{
     font-size:11px; letter-spacing:0.1em; text-transform:uppercase; font-weight:700;
     color:rgba(255,255,255,0.55);
@@ -200,17 +190,13 @@
       <h1>KADOSH <span>FINANCE</span></h1>
       <p>Entre com seu e-mail e senha.</p>
     </div>
-    <div class="auth-tabs">
-      <button type="button" class="auth-tab-btn active" id="authTabLogin" data-mode="login">Entrar</button>
-      <button type="button" class="auth-tab-btn" id="authTabSignup" data-mode="signup">Criar Conta</button>
-    </div>
+    <!-- Só login: acesso admin é concedido manualmente (insert em admin_users),
+         nunca por auto-cadastro — por isso não existe "Criar Conta" aqui. -->
     <form class="auth-form" id="loginForm">
       <label for="loginEmail">E-mail</label>
       <input type="email" id="loginEmail" placeholder="voce@email.com" autocomplete="email" required>
       <label for="loginPassword">Senha</label>
       <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
-      <label for="loginPasswordConfirm" class="field-confirm">Confirmar senha</label>
-      <input type="password" id="loginPasswordConfirm" class="field-confirm" placeholder="••••••••" autocomplete="new-password">
       <button type="submit" class="btn-auth-submit" id="loginSubmitBtn">Entrar</button>
     </form>
     <p class="auth-msg" id="authMsg"></p>
@@ -243,12 +229,6 @@
 </div>
 
 <script>
-  // Todo texto vindo do banco (nome de categoria, categoria_id, e-mail) passa
-  // por aqui antes de entrar num template de innerHTML — esse texto é criado
-  // por QUALQUER usuário e exibido na sessão do admin (XSS armazenado).
-  function escapeHtml(s){
-    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-  }
   // ========== SUPABASE — CLIENT (mesmo projeto do app principal) ==========
   // SUPABASE_URL e SUPABASE_ANON_KEY vêm de config.js (carregado no <head>).
   let sb = null;
@@ -263,16 +243,19 @@
     const sign = v < 0 ? '-' : '';
     return sign + 'R$ ' + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
   }
+  // Todo texto vindo do banco (nome de categoria, categoria_id, e-mail) passa
+  // por aqui antes de entrar num template de innerHTML — esse texto é criado
+  // por QUALQUER usuário e exibido na sessão do admin (XSS armazenado).
+  function escapeHtml(s){
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
 
-  // ========== AUTH (idêntico ao index.html — mesmo componente reaproveitado) ==========
+  // ========== AUTH (só login — sem cadastro, ver comentário no form) ==========
   const authScreenEl = document.getElementById('authScreen');
   const adminRootEl  = document.getElementById('adminRoot');
   const loginFormEl  = document.getElementById('loginForm');
   const loginBtnEl   = document.getElementById('loginSubmitBtn');
-  const authTabLoginEl    = document.getElementById('authTabLogin');
-  const authTabSignupEl   = document.getElementById('authTabSignup');
-  const passwordEl        = document.getElementById('loginPassword');
-  const passwordConfirmEl = document.getElementById('loginPasswordConfirm');
+  const passwordEl   = document.getElementById('loginPassword');
 
   function authMsg(text, type){
     const el = document.getElementById('authMsg');
@@ -280,25 +263,9 @@
     el.className = 'auth-msg' + (type ? (' ' + type) : '');
   }
 
-  let authMode = 'login';
-  function setAuthMode(mode){
-    authMode = mode;
-    const isSignup = mode === 'signup';
-    authTabLoginEl.classList.toggle('active', !isSignup);
-    authTabSignupEl.classList.toggle('active', isSignup);
-    loginFormEl.classList.toggle('mode-signup', isSignup);
-    passwordEl.autocomplete = isSignup ? 'new-password' : 'current-password';
-    loginBtnEl.textContent = isSignup ? 'Criar Conta' : 'Entrar';
-    authMsg('');
-  }
-  authTabLoginEl.addEventListener('click', () => setAuthMode('login'));
-  authTabSignupEl.addEventListener('click', () => setAuthMode('signup'));
-
   function translateAuthError(message){
     const map = {
       'Invalid login credentials': 'E-mail ou senha incorretos.',
-      'User already registered': 'Este e-mail já está cadastrado. Tente entrar.',
-      'Password should be at least 6 characters': 'A senha deve ter pelo menos 6 caracteres.',
       'Email not confirmed': 'Confirme seu e-mail antes de entrar.',
       'Unable to validate email address: invalid format': 'E-mail inválido.'
     };
@@ -311,21 +278,13 @@
     const email = document.getElementById('loginEmail').value.trim();
     const password = passwordEl.value;
 
-    if(authMode === 'signup'){
-      if(password.length < 6) return authMsg('A senha deve ter pelo menos 6 caracteres.', 'error');
-      if(password !== passwordConfirmEl.value) return authMsg('As senhas não coincidem.', 'error');
-    }
-
     loginBtnEl.disabled = true;
-    authMsg(authMode === 'signup' ? 'Criando conta...' : 'Entrando...');
+    authMsg('Entrando...');
 
-    const { error } = authMode === 'signup'
-      ? await sb.auth.signUp({ email, password })
-      : await sb.auth.signInWithPassword({ email, password });
+    const { error } = await sb.auth.signInWithPassword({ email, password });
 
     loginBtnEl.disabled = false;
     if(error){ authMsg(translateAuthError(error.message), 'error'); return; }
-    if(authMode === 'signup') authMsg('Conta criada! Entrando...', 'success');
   });
 
   async function logout(){
@@ -427,7 +386,6 @@
         adminRootEl.style.display = 'none';
         authScreenEl.style.display = 'flex';
         loginFormEl.reset();
-        setAuthMode('login');
       }
     });
   } else {

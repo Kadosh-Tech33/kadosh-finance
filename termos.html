@@ -124,6 +124,7 @@
       <li><strong>Dados financeiros que você registra:</strong> saldo inicial, categorias, lançamentos (valor, data e descrição), rendas extras, metas e dados de cartão que você informar (nome, limite e dias de fechamento e vencimento; nunca número do cartão).</li>
       <li><strong>Registro de aceite:</strong> data e horário em que você aceitou estes termos.</li>
       <li><strong>Dados técnicos de acesso:</strong> informações como endereço IP e horário das requisições, registradas automaticamente pelo provedor de infraestrutura para fins de segurança e funcionamento do serviço.</li>
+      <li><strong>Dados da verificação anti-robô:</strong> ao entrar ou criar a conta, a verificação do hCaptcha coleta dados técnicos do seu navegador e dispositivo (como endereço IP, tipo de navegador e interações com a própria verificação) para confirmar que o acesso é feito por uma pessoa.</li>
     </ul>
 
     <h2>4. Para que usamos os dados</h2>
@@ -132,7 +133,7 @@
       <li>Salvar e exibir suas informações financeiras para você, em qualquer dispositivo em que entrar.</li>
       <li>Entrar em contato com você sobre a sua conta e dar suporte durante o beta (telefone e e-mail).</li>
       <li>Identificar erros e melhorar o produto, conforme descrito na seção destacada abaixo.</li>
-      <li>Proteger o serviço contra acessos indevidos e abusos.</li>
+      <li>Proteger o serviço contra acessos indevidos e abusos, incluindo tentativas automatizadas de login e de criação de contas.</li>
     </ul>
     <p>Não vendemos seus dados e não os usamos para publicidade.</p>
 
@@ -148,7 +149,12 @@
     </section>
 
     <h2>5. Compartilhamento</h2>
-    <p>Seus dados ficam armazenados na infraestrutura do Supabase, provedor contratado para hospedar o banco de dados e a autenticação do app, que os processa apenas para operar o serviço. Fora isso, só compartilharemos dados se houver obrigação legal ou ordem de autoridade competente.</p>
+    <p>Usamos dois provedores externos para operar o serviço:</p>
+    <ul>
+      <li><strong>Supabase:</strong> hospeda o banco de dados e a autenticação do app. Seus dados de cadastro e financeiros ficam armazenados na infraestrutura dele, que os processa apenas para operar o serviço.</li>
+      <li><strong>hCaptcha</strong> (Intuition Machines, Inc.): faz a verificação anti-robô nas telas de login e de criação de conta. Recebe apenas os dados técnicos da verificação descritos na seção 3, nunca seus dados financeiros, e os trata conforme a própria <a href="https://www.hcaptcha.com/privacy" target="_blank" rel="noopener noreferrer">Política de Privacidade</a> e os <a href="https://www.hcaptcha.com/terms" target="_blank" rel="noopener noreferrer">Termos de Serviço</a>. Esse processamento pode ocorrer fora do Brasil.</li>
+    </ul>
+    <p>Fora isso, só compartilharemos dados se houver obrigação legal ou ordem de autoridade competente.</p>
 
     <h2>6. Segurança</h2>
     <p>Cada conta só enxerga os próprios dados: essa separação é aplicada no próprio banco de dados, não apenas na tela do app. As exceções são as contas da equipe descritas na seção destacada acima. Adotamos cuidados razoáveis de segurança, mas nenhum sistema é totalmente imune a falhas; por isso, use uma senha forte e exclusiva para o Kadosh Finance.</p>

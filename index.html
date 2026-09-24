@@ -814,6 +814,7 @@
   }
   .btn-auth-submit:hover{ opacity:.9; transform:translateY(-1px); }
   .btn-auth-submit:disabled{ opacity:.6; cursor:default; transform:none; }
+  .auth-captcha{ display:flex; justify-content:center; min-height:78px; margin-top:4px; }
   .auth-msg{
     position:relative; z-index:1; margin-top:16px; font-size:13px; text-align:center;
     min-height:18px; line-height:1.5;
@@ -876,6 +877,7 @@
         <input type="checkbox" id="signupTerms">
         <span>Li e aceito os <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a></span>
       </label>
+      <div class="auth-captcha" id="authCaptcha"></div>
       <button type="submit" class="btn-auth-submit" id="loginSubmitBtn">Entrar</button>
     </form>
     <p class="auth-msg" id="authMsg"></p>
@@ -2725,6 +2727,37 @@
     el.className = 'auth-msg' + (type ? (' ' + type) : '');
   }
 
+  // ---------- hCaptcha (login e cadastro) ----------
+  // Render explícito: o script é injetado só DEPOIS de onHcaptchaLoad
+  // existir, então não tem corrida entre o api.js (async) e este script.
+  // O token vai no signUp/signInWithPassword (options.captchaToken) e é
+  // validado pelo Supabase no servidor — isso só passa a ser OBRIGATÓRIO
+  // quando o captcha é ligado em Authentication → Attack Protection.
+  // Token é de uso único: reset depois de cada tentativa.
+  let captchaWidgetId = null;
+  let captchaLoadFailed = false;
+  window.onHcaptchaLoad = () => {
+    captchaWidgetId = hcaptcha.render('authCaptcha', {
+      sitekey: HCAPTCHA_SITEKEY,
+      theme: 'dark',
+      // widget normal tem 303px; abaixo disso não cabe no card em celular
+      size: window.matchMedia('(max-width: 420px)').matches ? 'compact' : 'normal'
+    });
+  };
+  (() => {
+    const s = document.createElement('script');
+    s.src = 'https://js.hcaptcha.com/1/api.js?render=explicit&onload=onHcaptchaLoad&hl=pt';
+    s.async = true;
+    s.onerror = () => { captchaLoadFailed = true; };
+    document.head.appendChild(s);
+  })();
+  function getCaptchaToken(){
+    return (window.hcaptcha && captchaWidgetId !== null) ? hcaptcha.getResponse(captchaWidgetId) : '';
+  }
+  function resetCaptcha(){
+    if(window.hcaptcha && captchaWidgetId !== null) hcaptcha.reset(captchaWidgetId);
+  }
+
   let authMode = 'login';
   function setAuthMode(mode){
     authMode = mode;
@@ -2748,6 +2781,7 @@
       'Email not confirmed': 'Confirme seu e-mail antes de entrar.',
       'Unable to validate email address: invalid format': 'E-mail inválido.'
     };
+    if(/captcha/i.test(message)) return 'Verificação anti-robô expirou ou falhou. Marque o captcha de novo.';
     return map[message] || 'Não foi possível concluir. Tente novamente em instantes.';
   }
 
@@ -2765,6 +2799,13 @@
       if(!termsEl.checked) return authMsg('Para criar a conta, aceite os Termos de Uso.', 'error');
     }
 
+    const captchaToken = getCaptchaToken();
+    if(!captchaToken){
+      return authMsg(captchaLoadFailed
+        ? 'Não foi possível carregar a verificação anti-robô. Desative bloqueadores e recarregue a página.'
+        : 'Confirme que você não é um robô.', 'error');
+    }
+
     loginBtnEl.disabled = true;
     authMsg(authMode === 'signup' ? 'Criando conta...' : 'Entrando...');
 
@@ -2772,9 +2813,10 @@
     // (migration_6_cadastro_termos.sql) grava em profiles, com o horário
     // do aceite vindo do servidor.
     const { error } = authMode === 'signup'
-      ? await sb.auth.signUp({ email, password, options: { data: { telefone, aceitou_termos: true } } })
-      : await sb.auth.signInWithPassword({ email, password });
+      ? await sb.auth.signUp({ email, password, options: { data: { telefone, aceitou_termos: true }, captchaToken } })
+      : await sb.auth.signInWithPassword({ email, password, options: { captchaToken } });
 
+    resetCaptcha();
     loginBtnEl.disabled = false;
     if(error){ authMsg(translateAuthError(error.message), 'error'); return; }
     if(authMode === 'signup') authMsg('Conta criada! Entrando...', 'success');
